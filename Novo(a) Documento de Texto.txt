@@ -1,0 +1,230 @@
+ID	ATIVIDADE	RESUMO	INÍCIO	FIM	CALENDÁRIO	AVANÇO	STATUS
+1	Tubos do Screen	SIM	01/01/2026	02/01/2026	24		
+1	Visual da Parte Superior	NÃO	01/01/2026	02/01/2026	24		
+1	Visual da Parte Inferior	NÃO	01/01/2026	02/01/2026	24		
+1	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+1	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+1	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+1	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+1	Remoção de 1 niple Superior	NÃO	01/01/2026	02/01/2026	24		
+1	Remoção de 3 niples Inferiores	NÃO	01/01/2026	02/01/2026	24		
+1	Remoção de 2 niples Câmara	NÃO	01/01/2026	02/01/2026	24		
+1	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+1	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+1	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+2	Tubos Aço Carbono Fornalha Alta	SIM	01/01/2026	02/01/2026	24		
+2	Visual dos Tubos e Aberturas	NÃO	01/01/2026	02/01/2026	24		
+2	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+2	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+2	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+2	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+2	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+2	EMAT dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+2	Remoção de 6 niples PF	NÃO	01/01/2026	02/01/2026	24		
+2	Remoção de 6 niples PLE	NÃO	01/01/2026	02/01/2026	24		
+2	Remoção de 6 niples PLD	NÃO	01/01/2026	02/01/2026	24		
+2	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+2	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+2	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+3	Nariz e Câmara Fria	SIM	01/01/2026	02/01/2026	24		
+3	Visual da Parte Superior	NÃO	01/01/2026	02/01/2026	24		
+3	ME da Parte Superior	NÃO	01/01/2026	02/01/2026	24		
+3	Visual da Câmara Fria	NÃO	01/01/2026	02/01/2026	24		
+3	Visual Inferior do Nariz	NÃO	01/01/2026	02/01/2026	24		
+3	ME da Parte Infeior	NÃO	01/01/2026	02/01/2026	24		
+3	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+3	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+3	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+3	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+3	EMAT dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+3	Remoção de 3 niples Superior	NÃO	01/01/2026	02/01/2026	24		
+3	Remoção de 3 niples Inferior	NÃO	01/01/2026	02/01/2026	24		
+3	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+3	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+3	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+4	Tubos do Teto	SIM	01/01/2026	02/01/2026	24		
+4	Visual dos Tubos e Aberturas	NÃO	01/01/2026	02/01/2026	24		
+4	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+4	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+4	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+4	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+4	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+4	EMAT à frente do SH Sec	NÃO	01/01/2026	02/01/2026	24		
+4	Remoção de 3 niples	NÃO	01/01/2026	02/01/2026	24		
+4	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+4	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+4	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+5	Superaquecedor Secundário	SIM	01/01/2026	02/01/2026	24		
+5	Visual dos Tubos e fixações	NÃO	01/01/2026	02/01/2026	24		
+5	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+5	Adoçamento de trincas + LP	NÃO	01/01/2026	02/01/2026	24		
+6	Superaquecedor Terciário	SIM	01/01/2026	02/01/2026	24		
+6	Visual dos Tubos e fixações	NÃO	01/01/2026	02/01/2026	24		
+6	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+6	Adoçamento de trincas + LP	NÃO	01/01/2026	02/01/2026	24		
+7	Superaquecedor Quaternário	SIM	01/01/2026	02/01/2026	24		
+7	Visual dos Tubos e fixações	NÃO	01/01/2026	02/01/2026	24		
+7	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+7	Adoçamento de trincas + LP	NÃO	01/01/2026	02/01/2026	24		
+7	Substituição de tubo	NÃO	01/01/2026	02/01/2026	24		
+7	Boroscopia curva e coletor	NÃO	01/01/2026	02/01/2026	24		
+7	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+7	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+8	Superaquecedor Primário II	SIM	01/01/2026	02/01/2026	24		
+8	Visual dos Tubos e fixações	NÃO	01/01/2026	02/01/2026	24		
+8	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+8	Adoçamento de trincas + LP	NÃO	01/01/2026	02/01/2026	24		
+8	Troca da barra antivibração	NÃO	01/01/2026	02/01/2026	24		
+8	Reparação de Abraçadeiras	NÃO	01/01/2026	02/01/2026	24		
+8	Instalar Clipes	NÃO	01/01/2026	02/01/2026	24		
+8	LP das Soldas dos Clipes	NÃO	01/01/2026	02/01/2026	24		
+9	Superaquecedor Primário I	SIM	01/01/2026	02/01/2026	24		
+9	Visual dos Tubos e fixações	NÃO	01/01/2026	02/01/2026	24		
+9	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+9	Adoçamento de trincas + LP	NÃO	01/01/2026	02/01/2026	24		
+9	Troca da barra antivibração	NÃO	01/01/2026	02/01/2026	24		
+9	Reparação de Abraçadeiras	NÃO	01/01/2026	02/01/2026	24		
+9	Instalar Clipes	NÃO	01/01/2026	02/01/2026	24		
+9	LP das Soldas dos Clipes	NÃO	01/01/2026	02/01/2026	24		
+10	Parede Traseira e Load Carrying Tubes	SIM	01/01/2026	02/01/2026	24		
+10	Visual dos Tubos e fixações	NÃO	01/01/2026	02/01/2026	24		
+10	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+10	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+10	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+10	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+10	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+10	Remoção de 3 niples	NÃO	01/01/2026	02/01/2026	24		
+10	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+10	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+10	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+11	Aberturas Smelt, AR 1°, 2° e QP	SIM	01/01/2026	02/01/2026	24		
+11	Visual dos fundidos de Ar 1°	NÃO	01/01/2026	02/01/2026	24		
+11	Visual dos limpadores	NÃO	01/01/2026	02/01/2026	24		
+11	Visual das luvas de aberturas	NÃO	01/01/2026	02/01/2026	24		
+11	Visual dos tubos e aberturas	NÃO	01/01/2026	02/01/2026	24		
+11	LP da Parede Traseira	NÃO	01/01/2026	02/01/2026	24		
+11	LP da Parede Esquerda	NÃO	01/01/2026	02/01/2026	24		
+11	LP da Parede Frontal	NÃO	01/01/2026	02/01/2026	24		
+11	LP da Parede Direita	NÃO	01/01/2026	02/01/2026	24		
+11	ME dos Tubos e Aberturas	NÃO	01/01/2026	02/01/2026	24		
+11	ME das aberturas Smelt e Ar 1° PT	NÃO	01/01/2026	02/01/2026	24		
+11	Adoçamento de soldas	NÃO	01/01/2026	02/01/2026	24		
+11	Substituir 2 niples abert. Smelt #5	NÃO	01/01/2026	02/01/2026	24		
+11	Substituir 10 aberturas de Ar 1°	NÃO	01/01/2026	02/01/2026	24		
+11	Substituir 2 niples abert. Ar 1° #14	NÃO	01/01/2026	02/01/2026	24		
+11	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+11	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+11	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+12	Canaletas	SIM	01/01/2026	02/01/2026	24		
+12	Visual capotas e atomizadores	NÃO	01/01/2026	02/01/2026	24		
+12	LP das canaletas novas	NÃO	01/01/2026	02/01/2026	24		
+12	LP das canaletas antigas	NÃO	01/01/2026	02/01/2026	24		
+12	Inspeção visual lado água	NÃO	01/01/2026	02/01/2026	24		
+13	Piso	SIM	01/01/2026	02/01/2026	24		
+13	Visual das selagens e refratários	NÃO	01/01/2026	02/01/2026	24		
+13	Visual dos tubos	NÃO	01/01/2026	02/01/2026	24		
+13	ME dos tubos	NÃO	01/01/2026	02/01/2026	24		
+13	Reparo trinca na aleta tubos 1°/2°	NÃO	01/01/2026	02/01/2026	24		
+13	LP do reparo	NÃO	01/01/2026	02/01/2026	24		
+14	Aberturas Ar 3°, Queim. Licor e outras	SIM	01/01/2026	02/01/2026	24		
+14	Visual dos limpadores	NÃO	01/01/2026	02/01/2026	24		
+14	Visual das luvas de aberturas	NÃO	01/01/2026	02/01/2026	24		
+14	Visual dos tubos e aberturas	NÃO	01/01/2026	02/01/2026	24		
+14	LP das aberturas	NÃO	01/01/2026	02/01/2026	24		
+14	ME dos Tubos e Aberturas	NÃO	01/01/2026	02/01/2026	24		
+15	Soldas de Transição	SIM	01/01/2026	02/01/2026	24		
+15	Visual da transição	NÃO	01/01/2026	02/01/2026	24		
+15	ME dos tubos zona de transição	NÃO	01/01/2026	02/01/2026	24		
+16	Aberturas dos Queimadores de Carga	SIM	01/01/2026	02/01/2026	24		
+16	Visual das luvas de aberturas	NÃO	01/01/2026	02/01/2026	24		
+16	Visual dos tubos e aberturas	NÃO	01/01/2026	02/01/2026	24		
+16	LP das aberturas	NÃO	01/01/2026	02/01/2026	24		
+16	ME dos Tubos e Aberturas	NÃO	01/01/2026	02/01/2026	24		
+16	Substituir curva interior QC#3	NÃO	01/01/2026	02/01/2026	24		
+16	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+16	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+16	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+17	Tubos de Aço Carbono Fornalha Média	SIM	01/01/2026	02/01/2026	24		
+17	Visual dos tubos e aberturas	NÃO	01/01/2026	02/01/2026	24		
+17	ME dos Tubos e Aberturas	NÃO	01/01/2026	02/01/2026	24		
+17	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+17	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+17	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+17	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+17	EMAT dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+17	Remoção de 3 niples da PT	NÃO	01/01/2026	02/01/2026	24		
+17	Remoção de 6 niples da PF	NÃO	01/01/2026	02/01/2026	24		
+17	Remoção de 6 niples da PD	NÃO	01/01/2026	02/01/2026	24		
+17	Remoção de 6 niples da PE	NÃO	01/01/2026	02/01/2026	24		
+17	Substituições dos Paineis PD	NÃO	01/01/2026	02/01/2026	24		
+17	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+17	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+17	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+17	Visual do hopper	NÃO	01/01/2026	02/01/2026	24		
+17	Visual da junção com a fornalha	NÃO	01/01/2026	02/01/2026	24		
+17	Visual tubos, fixações e buffer	NÃO	01/01/2026	02/01/2026	24		
+17	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+17	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+17	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+17	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+17	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+17	Cortar 5 mini coletores superiores	NÃO	01/01/2026	02/01/2026	24		
+17	Cortar 2 mini coletores inferiores	NÃO	01/01/2026	02/01/2026	24		
+17	Cortar 3 niples inferiores	NÃO	01/01/2026	02/01/2026	24		
+17	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+17	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+17	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+17	Visual do hopper	NÃO	01/01/2026	02/01/2026	24		
+17	Visual do duto de gases	NÃO	01/01/2026	02/01/2026	24		
+17	Visual tubos, fixações e buffer	NÃO	01/01/2026	02/01/2026	24		
+17	ME dos Tubos	NÃO	01/01/2026	02/01/2026	24		
+17	LP das terminações de membranas	NÃO	01/01/2026	02/01/2026	24		
+18	Econimizador II	SIM	01/01/2026	02/01/2026	24		
+18	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+18	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+18	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+18	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+18	Cortar 5 mini coletores superiores	NÃO	01/01/2026	02/01/2026	24		
+18	Cortar 5 mini coletores inferiores	NÃO	01/01/2026	02/01/2026	24		
+18	Cortar 2 Caps do Coletor Inferior	NÃO	01/01/2026	02/01/2026	24		
+18	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+18	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+18	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+19	Econimizador I	SIM	01/01/2026	02/01/2026	24		
+19	Escovamento das Soldas	NÃO	01/01/2026	02/01/2026	24		
+19	TOFD das Soldas	NÃO	01/01/2026	02/01/2026	24		
+19	PM das Soldas	NÃO	01/01/2026	02/01/2026	24		
+19	US CBC das Soldas	NÃO	01/01/2026	02/01/2026	24		
+19	Cortar 5 mini coletores superiores	NÃO	01/01/2026	02/01/2026	24		
+19	Cortar 5 mini coletores inferiores	NÃO	01/01/2026	02/01/2026	24		
+19	Cortar 2 Caps do Coletor Inferior	NÃO	01/01/2026	02/01/2026	24		
+19	Boroscopia	NÃO	01/01/2026	02/01/2026	24		
+19	LP da Solda	NÃO	01/01/2026	02/01/2026	24		
+19	Phased Array	NÃO	01/01/2026	02/01/2026	24		
+19	Visual do Tubulão de Vapor	NÃO	01/01/2026	02/01/2026	24		
+19	Revisão das PSVs do Balão	NÃO	01/01/2026	02/01/2026	24		
+19	Revisão das PSVs do Super	NÃO	01/01/2026	02/01/2026	24		
+19	Recuperação 2 Atemperadores	NÃO	01/01/2026	02/01/2026	24		
+19	LP bisel	NÃO	01/01/2026	02/01/2026	24		
+19	LP acabamento	NÃO	01/01/2026	02/01/2026	24		
+19	Phased Array solda	NÃO	01/01/2026	02/01/2026	24		
+19	Phased pós tratamento térmico	NÃO	01/01/2026	02/01/2026	24		
+19	Cort 4 Caps demais Atemp.	NÃO	01/01/2026	02/01/2026	24		
+19	LP solda	NÃO	01/01/2026	02/01/2026	24		
+19	US convencional	NÃO	01/01/2026	02/01/2026	24		
+19	Visual do Porão	NÃO	01/01/2026	02/01/2026	24		
+19	Visual do Pent House	NÃO	01/01/2026	02/01/2026	24		
+19	Visual dos sopradores	NÃO	01/01/2026	02/01/2026	24		
+19	LP na ponta das lanças	NÃO	01/01/2026	02/01/2026	24		
+19	US nas soldas lanças (super)	NÃO	01/01/2026	02/01/2026	24		
+20	Chaminé da Caldeira (771-28-001)	SIM	01/01/2026	02/01/2026	24		
+20	Hidrojato Limpeza	NÃO	01/01/2026	02/01/2026	24		
+20	Visual e ME Rapel	NÃO	01/01/2026	02/01/2026	24		
+21	Chaminé do Tanque Dissolvedor (771-21-290)	SIM	01/01/2026	02/01/2026	24		
+21	Hidrojato Limpeza	NÃO	01/01/2026	02/01/2026	24		
+21	Visual e ME Rapel	NÃO	01/01/2026	02/01/2026	24		
+22	Chaminé do Flair (778-28-032)	SIM	01/01/2026	02/01/2026	24		
+22	Hidrojato Limpeza	NÃO	01/01/2026	02/01/2026	24		
+22	Visual e ME Rapel	NÃO	01/01/2026	02/01/2026	24		
+23	Geral do Telhado	SIM	01/01/2026	02/01/2026	24		
+23	Visual geral	NÃO	01/01/2026	02/01/2026	24		

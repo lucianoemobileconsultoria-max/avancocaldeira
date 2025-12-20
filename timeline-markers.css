@@ -1,0 +1,26 @@
+/* ====== TIMELINE MARKERS ====== */
+
+.timeline-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    cursor: help;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.timeline-marker:hover {
+    transform: translate(-50%, -50%) scale(1.3);
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+}
+
+.progress-bar-container {
+    position: relative;
+}

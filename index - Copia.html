@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Atividades - Caldeira</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">🏭</div>
+                    <div>
+                        <h1 class="title">Sistema de Controle</h1>
+                        <p class="subtitle">Atividades de Manutenção - Caldeira</p>
+                    </div>
+                </div>
+                <div class="user-section">
+                    <div id="userDisplay" class="user-email"></div>
+                    <button id="logoutBtn" class="btn-logout" onclick="handleLogout()">🚪 Sair</button>
+                </div>
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value" id="totalActivities">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Concluídas</div>
+                        <div class="stat-value completed" id="completedActivities">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Progresso Geral</div>
+                        <div class="stat-value progress" id="overallProgress">0%</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" id="activitiesTab" onclick="showActivitiesTab()">
+                📋 Atividades
+            </button>
+            <button class="tab-button" id="sCurveTab" onclick="showSCurveTab()">
+                📈 Curva S
+            </button>
+        </div>
+
+        <!-- Activities Tab Content -->
+        <div class="tab-content" id="activitiesTabContent">
+
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="filterSearch" class="filter-label">🔎 Buscar Atividade:</label>
+                    <input type="text" id="filterSearch" class="filter-input" placeholder="Digite para buscar...">
+                </div>
+                <div class="filter-group">
+                    <label for="filterID" class="filter-label">🔍 Filtrar por ID:</label>
+                    <select id="filterID" class="filter-select">
+                        <option value="">Todos os IDs</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterStatus" class="filter-label">📊 Status:</label>
+                    <select id="filterStatus" class="filter-select">
+                        <option value="">Todos</option>
+                        <option value="completed">Concluídas (100%)</option>
+                        <option value="inProgress">Em Andamento (1-99%)</option>
+                        <option value="notStarted">Não Iniciadas (0%)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Record Navigator -->
+            <div class="record-navigator" id="recordNavigator">
+                <button class="nav-button" id="prevRecord" title="Registro Anterior">
+                    ◀ Anterior
+                </button>
+                <div class="record-info" id="recordInfo">
+                    REGISTRO 1 de 1
+                </div>
+                <button class="nav-button" id="nextRecord" title="Próximo Registro">
+                    Próximo ▶
+                </button>
+            </div>
+
+            <!-- Activities List -->
+            <div class="activities-container" id="activitiesContainer">
+                <!-- Activities will be loaded here dynamically -->
+            </div>
+
+            <!-- Upload Button -->
+            <div class="upload-section">
+                <label for="fileInput" class="btn-upload">
+                    📄 Carregar Novo Arquivo de Texto
+                </label>
+                <input type="file" id="fileInput" accept=".txt" style="display: none;">
+            </div>
+        </div> <!-- End Activities Tab Content -->
+
+        <!-- S-Curve Tab Content -->
+        <div class="tab-content hidden" id="sCurveTabContent">
+            <div class="scurve-container">
+                <div class="scurve-header">
+                    <h2>📈 Curva S - Progresso Acumulado</h2>
+                    <p>Comparação entre progresso planejado e real ao longo do tempo</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="sCurveChart"></canvas>
+                </div>
+                <div class="scurve-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #3b82f6;"></span>
+                        <span class="legend-label">Planejado - Baseado nas datas de início/fim</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #10b981;"></span>
+                        <span class="legend-label">Real - Progresso atual registrado</span>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End S-Curve Tab Content -->
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-logo">🏭</div>
+                <h2 id="modalTitle">Bem-vindo!</h2>
+                <p id="modalSubtitle">Faça login para sincronizar seus dados</p>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="emailInput">📧 Email</label>
+                    <input type="email" id="emailInput" placeholder="seu@email.com" autocomplete="email">
+                </div>
+                <div class="input-group">
+                    <label for="passwordInput">🔒 Senha</label>
+                    <input type="password" id="passwordInput" placeholder="********" autocomplete="current-password">
+                </div>
+                <div id="errorMessage" class="error-message"></div>
+                <div class="modal-actions">
+                    <button id="loginBtn" class="btn-primary" onclick="handleLogin()">Entrar</button>
+                    <button id="registerBtn" class="btn-secondary" onclick="handleRegister()">Criar Conta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
