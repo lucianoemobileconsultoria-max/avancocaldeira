@@ -40,11 +40,11 @@ function setupEventListeners() {
     const fileInput = document.getElementById('fileInput');
     if (fileInput) fileInput.addEventListener('change', handleFileUpload);
 
-    const prevRecord = document.getElementById('prevRecord');
-    if (prevRecord) prevRecord.addEventListener('click', previousRecord);
+    const pBtn = document.getElementById('prevRecord');
+    if (pBtn) pBtn.addEventListener('click', previousRecord);
 
-    const nextRecord = document.getElementById('nextRecord');
-    if (nextRecord) nextRecord.addEventListener('click', nextRecord);
+    const nBtn = document.getElementById('nextRecord');
+    if (nBtn) nBtn.addEventListener('click', nextRecord);
 }
 
 // Load progress data from localStorage
@@ -710,7 +710,8 @@ function renderActivities() {
                     <div class="section-stats">
                         <div class="section-progress">${p}%</div>
                         <div class="section-count">${comp}/${all.length} concluídas</div>
-                        ${group.parent ? `<div class="section-actions" style="margin-top: 0.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                        ${group.parent ? `
+                        <div class="section-actions" style="margin-top: 0.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
                             <button class="btn-control edit" onclick="editActivity('${group.parent.uniqueKey}')" style="background: var(--warning); padding: 0.3rem 0.6rem; font-size: 0.9rem; width: auto; height: auto;" title="Editar">✏️</button>
                             <button class="btn-control delete" onclick="deleteActivity('${group.parent.uniqueKey}')" style="background: var(--danger); padding: 0.3rem 0.6rem; font-size: 0.9rem; width: auto; height: auto;" title="Excluir">🗑️</button>
                         </div>` : ''}
@@ -953,10 +954,23 @@ async function saveManualActivity() {
 
     if (key) {
         const a = activities.find(x => x.uniqueKey === key);
-        if (a) Object.assign(a, { id, name, startDate: start, endDate: end, calendar: dur || '-', critical: crit, summary: sum });
+        if (a) {
+            Object.assign(a, { id, name, startDate: start, endDate: end, calendar: dur || '-', critical: crit, summary: sum });
+            if (tw && !isNaN(tw)) {
+                a.hasWelds = true;
+                a.totalWelds = parseInt(tw);
+                if (!a.name.toLowerCase().includes('solda')) a.name += ` (${tw} SOLDAS)`;
+            }
+        }
     } else {
         const uk = generateUniqueKey(id, name);
-        activities.push({ id, name, startDate: start, endDate: end, calendar: dur || '-', critical: crit, summary: sum, uniqueKey: uk, statusText: 'PROXIMO' });
+        const newAct = { id, name, startDate: start, endDate: end, calendar: dur || '-', critical: crit, summary: sum, uniqueKey: uk, statusText: 'PROXIMO' };
+        if (tw && !isNaN(tw)) {
+            newAct.hasWelds = true;
+            newAct.totalWelds = parseInt(tw);
+            if (!newAct.name.toLowerCase().includes('solda')) newAct.name += ` (${tw} SOLDAS)`;
+        }
+        activities.push(newAct);
     }
 
     if (tw && !isNaN(tw)) setWeldsCompleted(key || generateUniqueKey(id, name), getWeldsCompleted(key || generateUniqueKey(id, name)), parseInt(tw));

@@ -29,9 +29,11 @@ auth.onAuthStateChanged(async (user) => {
         updateUserDisplay(user);
 
         // Show admin button if user is admin
-        const adminBtn = document.getElementById('adminBtn');
         if (adminBtn && user.email === 'engelmobile2020@gmail.com') {
             adminBtn.style.display = 'inline-block';
+            document.body.classList.add('is-admin');
+        } else {
+            document.body.classList.remove('is-admin');
         }
 
         // Load activities from Firestore first

@@ -544,6 +544,7 @@ body {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
     font-size: 1.25rem;
     font-weight: 700;
     box-shadow: 0 4px 0 #000000, 0 8px 16px rgba(0, 0, 0, 0.3);
@@ -1799,6 +1800,22 @@ body {
 /* Modal and Utility Styles */
 .hidden {
     display: none !important;
+}
+
+/* Access Control */
+.item-actions,
+.section-actions,
+.admin-only {
+    display: none !important;
+}
+
+body.is-admin .item-actions,
+body.is-admin .section-actions {
+    display: flex !important;
+}
+
+body.is-admin .admin-only {
+    display: inline-flex !important;
 }
 
 .modal {

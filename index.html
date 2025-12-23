@@ -127,11 +127,12 @@
                 </label>
                 <input type="file" id="fileInput" accept=".txt, .xlsx, .xls" style="display: none;">
 
-                <button onclick="openAddActivityModal()" class="btn-upload" style="background: var(--primary);">
+                <button onclick="openAddActivityModal()" class="btn-upload admin-only"
+                    style="background: var(--primary);">
                     ➕ Novo Registro (Manual)
                 </button>
 
-                <button onclick="clearAllData()" class="btn-upload" style="background: #dc2626;">
+                <button onclick="clearAllData()" class="btn-upload admin-only" style="background: #dc2626;">
                     🗑️ Limpar Dados
                 </button>
 
