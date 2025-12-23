@@ -810,7 +810,8 @@ function renderActivity(a, isChild = false) {
 }
 
 function attachEventListeners() {
-    document.querySelectorAll('.btn-control').forEach(btn => {
+    // Only target activity progress buttons to avoid overwriting security modal button handlers
+    document.querySelectorAll('.btn-control[data-action]').forEach(btn => {
         btn.onclick = (e) => {
             const k = e.currentTarget.getAttribute('data-key');
             const act = e.currentTarget.getAttribute('data-action');
@@ -1183,22 +1184,35 @@ function deleteSecurityRecord(id) {
     renderSecurityList();
 }
 
+function clearSecurityData() {
+    if (prompt('Senha admin para LIMPAR TUDO:') !== '789512') {
+        return;
+    }
+
+    if (!confirm('ATENÇÃO: Isso apagará TODOS os registros de segurança permanentemente. Confirmar?')) return;
+
+    securityRecords = [];
+    saveSecurityData();
+    renderSecurityList();
+    alert('✅ Todos os registros de segurança foram apagados.');
+}
+
 function renderSecurityList() {
     const tbody = document.getElementById('securityTableBody');
     if (!tbody) return;
 
     tbody.innerHTML = securityRecords.map(r => `
         <tr>
-            <td><strong>#${r.id}</strong></td>
-            <td>${r.atividade || '-'}</td>
-            <td><span class="badge" style="background: ${r.th === 'SIM' ? 'var(--danger)' : 'var(--success)'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${r.th}</span></td>
-            <td>${r.prazo ? new Date(r.prazo).toLocaleString() : '-'}</td>
-            <td>${r.turno || '-'}</td>
-            <td>${r.contratado || '-'}</td>
-            <td>${r.solicitante || '-'}</td>
-            <td>${r.responsavel || '-'}</td>
-            <td><div style="max-height: 50px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;">${r.observacao || '-'}</div></td>
-            <td class="admin-only" style="text-align: center;">
+            <td data-label="ID"><strong>#${r.id}</strong></td>
+            <td data-label="Atividade">${r.atividade || '-'}</td>
+            <td data-label="TH"><span class="badge" style="background: ${r.th === 'SIM' ? 'var(--danger)' : 'var(--success)'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${r.th}</span></td>
+            <td data-label="Prazo">${r.prazo ? new Date(r.prazo).toLocaleString() : '-'}</td>
+            <td data-label="Turno">${r.turno || '-'}</td>
+            <td data-label="Contratado/Substituído">${r.contratado || '-'}</td>
+            <td data-label="Solicitante">${r.solicitante || '-'}</td>
+            <td data-label="Responsável">${r.responsavel || '-'}</td>
+            <td data-label="Observação"><div style="max-height: 50px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;">${r.observacao || '-'}</div></td>
+            <td data-label="Ações" style="text-align: center;">
                 <div style="display: flex; gap: 0.3rem; justify-content: center;">
                     <button class="btn-control edit" onclick="openSecurityFormModal(${r.id})" style="background: var(--warning); padding: 5px; height: 30px; width: 30px;">✏️</button>
                     <button class="btn-control delete" onclick="deleteSecurityRecord(${r.id})" style="background: var(--danger); padding: 5px; height: 30px; width: 30px;">🗑️</button>
@@ -1222,21 +1236,35 @@ function handleSecurityExcelUpload(event) {
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-            // Map Excel columns to our fields
-            const imported = jsonData.map((row, index) => {
-                const maxId = securityRecords.reduce((max, r) => Math.max(max, r.id || 0), 0);
-                return {
-                    id: maxId + index + 1,
-                    atividade: row['ATIVIDADE'] || row['Tarefa'] || '',
-                    th: (String(row['TH']).toUpperCase().includes('SIM')) ? 'SIM' : 'NÃO',
-                    prazo: row['PRAZO'] || row['Data'] || '',
-                    turno: row['TURNO'] || 'M',
-                    contratado: row['CONTRATADO/SUBSTITUÍDO'] || row['Contratado'] || '',
-                    solicitante: row['SOLICITANTE'] || '',
-                    responsavel: row['RESPONSÁVEL'] || '',
-                    observacao: row['OBSERVAÇÃO'] || ''
+            // Map Excel columns to our fields with case-insensitive support
+            let nextId = securityRecords.reduce((max, r) => Math.max(max, r.id || 0), 0) + 1;
+            const imported = jsonData.map((row) => {
+                const getVal = (possibleKeys) => {
+                    const foundKey = Object.keys(row).find(k =>
+                        possibleKeys.some(pk => k.trim().toUpperCase() === pk.toUpperCase())
+                    );
+                    return foundKey ? row[foundKey] : '';
                 };
-            });
+
+                const securityBaseId = securityRecords.reduce((max, r) => Math.max(max, r.id || 0), 0);
+
+                // Parse TH: handle S/N, SIM/NAO
+                let thVal = String(getVal(['TH', 'STATUS'])).toUpperCase();
+                let thFinal = 'NÃO';
+                if (thVal.includes('S') || thVal.includes('SIM')) thFinal = 'SIM';
+
+                return {
+                    id: nextId++,
+                    atividade: getVal(['Atividade', 'ATIVIDADE', 'Tarefa', 'Tarefa']),
+                    th: thFinal,
+                    prazo: getVal(['PRAZO', 'Data', 'Vencimento']),
+                    turno: getVal(['TURNO', 'Turno']) || 'M',
+                    contratado: getVal(['Contratado/Substituído', 'CONTRATADO/SUBSTITUÍDO', 'Contratado']),
+                    solicitante: getVal(['Solicitante', 'SOLICITANTE']),
+                    responsavel: getVal(['Responsável', 'RESPONSÁVEL']),
+                    observacao: getVal(['Observação', 'OBSERVAÇÃO', 'Obs'])
+                };
+            }).filter(r => r.atividade && r.atividade !== 'GERAL' && r.atividade !== 'FORNALHA BAIXA');
 
             securityRecords = [...securityRecords, ...imported];
             saveSecurityData();

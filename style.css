@@ -536,9 +536,10 @@ body {
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid #000000;
     color: var(--text-primary);
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    aspect-ratio: 1/1;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -547,6 +548,7 @@ body {
     flex-shrink: 0;
     font-size: 1.25rem;
     font-weight: 700;
+    padding: 0 !important;
     box-shadow: 0 4px 0 #000000, 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
@@ -555,6 +557,19 @@ body {
     border-color: #000000;
     transform: translateY(-2px);
     box-shadow: 0 6px 0 #000000, 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.btn-security-action {
+    width: auto !important;
+    height: auto !important;
+    padding: 0.6rem 1.2rem !important;
+    font-size: 0.85rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.6rem !important;
+    border-radius: 10px !important;
+    white-space: nowrap !important;
 }
 
 .btn-control:active {
@@ -902,16 +917,26 @@ body {
         gap: 0.6rem;
     }
 
+    .activity-info {
+        order: 1;
+    }
+
     .controls {
         justify-content: center;
         gap: 0.6rem;
         order: 2;
     }
 
+    .item-actions {
+        order: 3;
+        justify-content: center !important;
+        margin-left: 0 !important;
+    }
+
     .btn-control {
-        width: 42px;
-        height: 42px;
-        font-size: 1.3rem;
+        width: 38px;
+        height: 38px;
+        font-size: 1.2rem;
     }
 
     .progress-display {
@@ -1066,14 +1091,26 @@ body {
         gap: 0.5rem;
     }
 
+    .activity-info {
+        order: 1;
+    }
+
     .controls {
         gap: 0.5rem;
+        order: 2;
+        justify-content: center;
+    }
+
+    .item-actions {
+        order: 3;
+        justify-content: center !important;
+        margin-left: 0 !important;
     }
 
     .btn-control {
-        width: 38px;
-        height: 38px;
-        font-size: 1.2rem;
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
     }
 
     .progress-display {
@@ -1139,9 +1176,9 @@ body {
 
     /* Smaller buttons for welds */
     .welds-control .btn-control {
-        width: 36px;
-        height: 36px;
-        font-size: 1.1rem;
+        width: 34px;
+        height: 34px;
+        font-size: 1rem;
     }
 
     /* Progress Bars - Extra Small */
@@ -1846,6 +1883,11 @@ body.is-admin .admin-only {
     display: inline-flex !important;
 }
 
+body.is-admin td.admin-only,
+body.is-admin th.admin-only {
+    display: table-cell !important;
+}
+
 .modal {
     position: fixed;
     top: 0;
@@ -1862,8 +1904,14 @@ body.is-admin .admin-only {
 }
 
 .modal.show {
-    display: flex;
-    /* Mostra apenas quando tiver a classe 'show' */
+    display: flex !important;
+    z-index: 10001 !important;
+    pointer-events: auto !important;
+}
+
+.btn-control {
+    pointer-events: auto !important;
+    cursor: pointer !important;
 }
 
 
@@ -1875,8 +1923,10 @@ body.is-admin .admin-only {
     box-shadow: var(--shadow);
     width: 95%;
     max-width: 600px;
-    max-height: 90vh;
+    max-height: 96vh;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-header {
@@ -1957,32 +2007,40 @@ body.is-admin .admin-only {
 }
 
 .security-table-wrapper {
-    overflow-x: auto;
+    overflow: auto;
     background: rgba(15, 23, 42, 0.4);
     border-radius: 16px;
     border: 1px solid var(--border);
     margin-top: 1rem;
+    flex: 1;
+    /* Stretch to fill modal */
+    min-height: 0;
+    /* Important for flex child to scroll */
 }
 
 .security-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1200px;
+    min-width: 1400px;
+    /* Wider to show all columns clearly */
 }
 
 .security-table th {
-    padding: 1.25rem 1rem;
+    padding: 0.75rem 0.5rem;
     text-align: left;
     font-weight: 700;
     color: var(--text-secondary);
     border-bottom: 2px solid var(--border);
     background: rgba(255, 255, 255, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .security-table td {
-    padding: 1.25rem 1rem;
+    padding: 0.6rem 0.5rem;
     border-bottom: 1px solid var(--border);
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: var(--text-primary) !important;
     vertical-align: middle;
 }
@@ -2023,5 +2081,91 @@ body.is-admin .admin-only {
         font-size: 1rem !important;
         min-width: unset;
         padding: 0.8rem 1.5rem !important;
+    }
+
+    #securityModal .modal-content {
+        padding: 0.8rem !important;
+        width: 98vw !important;
+        height: 98vh !important;
+        border-radius: 12px !important;
+    }
+
+    .security-actions {
+        gap: 0.6rem !important;
+        margin-bottom: 1rem !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding-bottom: 0;
+    }
+
+    .btn-security-action {
+        padding: 0.8rem !important;
+        font-size: 0.9rem !important;
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: auto !important;
+        flex-shrink: 0;
+        justify-content: center !important;
+    }
+
+    .security-table {
+        min-width: unset !important;
+        display: block;
+    }
+
+    .security-table thead {
+        display: none;
+    }
+
+    .security-table tbody,
+    .security-table tr,
+    .security-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .security-table tr {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .security-table td {
+        padding: 0.5rem 0 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        text-align: right;
+        min-height: 2.5rem;
+    }
+
+    .security-table td:last-child {
+        border-bottom: none;
+        margin-top: 0.5rem;
+        padding-top: 1rem !important;
+        justify-content: center;
+    }
+
+    .security-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-align: left;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        flex-shrink: 0;
+        width: 120px;
+    }
+
+    .security-table td div {
+        max-height: unset !important;
+        white-space: normal !important;
+        text-align: right;
+        word-break: break-word;
     }
 }

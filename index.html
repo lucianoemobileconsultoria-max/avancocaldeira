@@ -15,7 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 
 <body>
@@ -28,7 +28,7 @@
                     <div>
                         <h1 class="title">Sistema de Controle</h1>
                         <p class="subtitle">Atividades de Manutenção - Caldeira <span
-                                style="opacity: 0.6; font-size: 0.8rem;">v3.0.0</span></p>
+                                style="opacity: 0.6; font-size: 0.8rem;">v4.0.0</span></p>
                     </div>
                 </div>
                 <div class="stats-container">
@@ -240,7 +240,7 @@
         <div class="user-section footer-user">
             <div id="userDisplay" class="user-email"></div>
             <div class="user-actions">
-                <span style="font-size: 0.7rem; opacity: 0.5; margin-right: 1rem;">Version 3.0.0</span>
+                <span style="font-size: 0.7rem; opacity: 0.5; margin-right: 1rem;">Version 4.0.0</span>
                 <button id="adminBtn" class="btn-admin" onclick="openAdminPanel()" style="display: none;">👤
                     Admin</button>
                 <button id="logoutBtn" class="btn-logout" onclick="handleLogout()">🚪 Sair</button>
@@ -297,21 +297,26 @@
 
     <!-- Security Control Modal (List View) -->
     <div id="securityModal" class="modal">
-        <div class="modal-content" style="max-width: 95vw; width: 1200px;">
+        <div class="modal-content" style="max-width: 98vw; width: 98vw; padding: 1.5rem;">
             <div class="modal-header">
                 <h2>🛡️ Controle de Segurança</h2>
                 <button class="modal-close" onclick="closeSecurityModal()">×</button>
             </div>
             <div class="modal-body">
-                <div class="section-actions security-actions">
-                    <button class="btn-control admin-only" onclick="openSecurityFormModal()"
-                        style="background: var(--success); color: white;">➕ Novo Registro</button>
-                    <label for="securityExcelInput" class="btn-control admin-only"
-                        style="background: var(--primary); color: white; cursor: pointer;">
+                <div class="section-actions security-actions"
+                    style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                    <button class="btn-control btn-security-action" onclick="openSecurityFormModal()"
+                        style="background: #10b981; color: white;">🛡️ Novo Registro</button>
+
+                    <label for="securityExcelInput" class="btn-control btn-security-action"
+                        style="background: #6366f1; color: white; cursor: pointer; margin-bottom: 0;">
                         📊 Importar Excel
                     </label>
                     <input type="file" id="securityExcelInput" accept=".xlsx, .xls" style="display: none;"
                         onchange="handleSecurityExcelUpload(event)">
+
+                    <button class="btn-control btn-security-action" onclick="clearSecurityData()"
+                        style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
                 </div>
                 <div class="security-table-wrapper">
                     <table class="security-table">
@@ -326,7 +331,7 @@
                                 <th>Solicitante</th>
                                 <th>Responsável</th>
                                 <th>Observação</th>
-                                <th class="admin-only" style="text-align: center;">Ações</th>
+                                <th style="text-align: center;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="securityTableBody"></tbody>
@@ -399,9 +404,9 @@
         </div>
     </div>
 
-    <script src="firebase-config.js?v=3"></script>
-    <script src="script.js?v=3"></script>
-    <script src="migration.js?v=3"></script>
+    <script src="firebase-config.js?v=5"></script>
+    <script src="script.js?v=5"></script>
+    <script src="migration.js?v=5"></script>
 </body>
 
 </html>
