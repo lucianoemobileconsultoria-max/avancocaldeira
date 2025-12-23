@@ -6,13 +6,23 @@ let currentRecordIndex = 0; // Index of currently displayed record
 let itemsPerPage = 5; // Number of records to show at once
 let sCurveChart = null; // Chart.js instance for S-Curve
 let isLoadingActivities = false; // Flag to prevent duplicate loads
+let securityRecords = []; // Tracking security records separately
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     loadProgressData();
     loadWeldsData(); // Load welds tracking data
     loadActivities(); // Try to load saved activities first
+    loadSecurityData(); // NEW: Load security records
     setupEventListeners();
+
+    // FAIL-SAFE: Add specialized listener for security button
+    const secBtn = document.getElementById('securityBtnMain');
+    if (secBtn) {
+        secBtn.addEventListener('click', (e) => {
+            openSecurityModal();
+        });
+    }
 });
 
 // Setup event listeners
@@ -822,8 +832,20 @@ function updateRecordNavigator(start, end, total) {
 }
 
 // Tab management
-function showActivitiesTab() { document.getElementById('activitiesTab').classList.add('active'); document.getElementById('sCurveTab').classList.remove('active'); document.getElementById('activitiesTabContent').classList.remove('hidden'); document.getElementById('sCurveTabContent').classList.add('hidden'); }
-function showSCurveTab() { document.getElementById('activitiesTab').classList.remove('active'); document.getElementById('sCurveTab').classList.add('active'); document.getElementById('activitiesTabContent').classList.add('hidden'); document.getElementById('sCurveTabContent').classList.remove('hidden'); renderSCurve(); }
+function showActivitiesTab() {
+    document.getElementById('activitiesTabContent').style.display = 'block';
+    document.getElementById('sCurveTabContent').style.display = 'none';
+    document.getElementById('activitiesTab').classList.add('active');
+    document.getElementById('sCurveTab').classList.remove('active');
+}
+
+function showSCurveTab() {
+    document.getElementById('activitiesTabContent').style.display = 'none';
+    document.getElementById('sCurveTabContent').style.display = 'block';
+    document.getElementById('activitiesTab').classList.remove('active');
+    document.getElementById('sCurveTab').classList.add('active');
+    setTimeout(renderSCurve, 100);
+}
 
 // S-Curve
 function calculateSCurveData() {
@@ -1032,4 +1054,199 @@ function exportToExcel() {
     worksheet["!cols"] = Object.keys(data[0]).map(() => ({ wch: max_width + 2 }));
 
     XLSX.writeFile(workbook, `Controle_Caldeira_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// ====== SECURITY CONTROL MODULE ======
+
+async function loadSecurityData() {
+    // Try localStorage first
+    const saved = localStorage.getItem('caldeira_security');
+    if (saved) {
+        securityRecords = JSON.parse(saved);
+        renderSecurityList();
+    }
+
+    // Then Firestore if logged in
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+            const doc = await db.collection('shared_data').doc('security').get();
+            if (doc.exists && doc.data().records) {
+                securityRecords = doc.data().records;
+                localStorage.setItem('caldeira_security', JSON.stringify(securityRecords));
+                renderSecurityList();
+            }
+        } catch (e) {
+            console.error("Error loading security data:", e);
+        }
+    }
+}
+
+async function saveSecurityData() {
+    localStorage.setItem('caldeira_security', JSON.stringify(securityRecords));
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+            await db.collection('shared_data').doc('security').set({
+                records: securityRecords,
+                lastUpdated: new Date().toISOString()
+            });
+        } catch (e) {
+            console.error("Error saving security data:", e);
+        }
+    }
+}
+
+function openSecurityModal() {
+    console.log("Opening Security Modal...");
+    const modal = document.getElementById('securityModal');
+    if (!modal) {
+        console.error("ERRO: Elemento 'securityModal' não encontrado!");
+        alert("Erro técnico: Janela de segurança não encontrada no HTML.");
+        return;
+    }
+    modal.classList.add('show');
+    renderSecurityList();
+}
+
+function closeSecurityModal() {
+    document.getElementById('securityModal').classList.remove('show');
+}
+
+function openSecurityFormModal(id = null) {
+    if (prompt('Senha admin:') !== '789512') return;
+
+    document.getElementById('securityFormModal').classList.add('show');
+    const form = document.querySelector('#securityFormModal .manual-form');
+    document.getElementById('securityEditId').value = id || '';
+
+    if (id) {
+        document.getElementById('securityFormTitle').textContent = '🛡️ Editar Registro de Segurança';
+        const record = securityRecords.find(r => r.id === id);
+        if (record) {
+            document.getElementById('secAtividade').value = record.atividade || '';
+            document.getElementById('secTH').value = record.th || 'SIM';
+            document.getElementById('secTurno').value = record.turno || 'M';
+            document.getElementById('secPrazo').value = record.prazo || '';
+            document.getElementById('secContratado').value = record.contratado || '';
+            document.getElementById('secSolicitante').value = record.solicitante || '';
+            document.getElementById('secResponsavel').value = record.responsavel || '';
+            document.getElementById('secObservacao').value = record.observacao || '';
+        }
+    } else {
+        document.getElementById('securityFormTitle').textContent = '🛡️ Novo Registro de Segurança';
+        document.querySelectorAll('#securityFormModal input, #securityFormModal textarea').forEach(i => i.value = '');
+        document.getElementById('secTH').value = 'SIM';
+        document.getElementById('secTurno').value = 'M';
+    }
+}
+
+function closeSecurityFormModal() {
+    document.getElementById('securityFormModal').classList.remove('show');
+}
+
+function saveSecurityRecord() {
+    const editId = document.getElementById('securityEditId').value;
+    const record = {
+        atividade: document.getElementById('secAtividade').value,
+        th: document.getElementById('secTH').value,
+        turno: document.getElementById('secTurno').value,
+        prazo: document.getElementById('secPrazo').value,
+        contratado: document.getElementById('secContratado').value,
+        solicitante: document.getElementById('secSolicitante').value,
+        responsavel: document.getElementById('secResponsavel').value,
+        observacao: document.getElementById('secObservacao').value,
+    };
+
+    if (editId) {
+        const index = securityRecords.findIndex(r => r.id == editId);
+        if (index !== -1) {
+            record.id = parseInt(editId);
+            securityRecords[index] = record;
+        }
+    } else {
+        const maxId = securityRecords.reduce((max, r) => Math.max(max, r.id || 0), 0);
+        record.id = maxId + 1;
+        securityRecords.push(record);
+    }
+
+    saveSecurityData();
+    renderSecurityList();
+    closeSecurityFormModal();
+    alert('✅ Registro salvo!');
+}
+
+function deleteSecurityRecord(id) {
+    if (prompt('Senha admin:') !== '789512') return;
+    if (!confirm('Deseja excluir este registro de segurança?')) return;
+
+    securityRecords = securityRecords.filter(r => r.id != id);
+    saveSecurityData();
+    renderSecurityList();
+}
+
+function renderSecurityList() {
+    const tbody = document.getElementById('securityTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = securityRecords.map(r => `
+        <tr>
+            <td><strong>#${r.id}</strong></td>
+            <td>${r.atividade || '-'}</td>
+            <td><span class="badge" style="background: ${r.th === 'SIM' ? 'var(--danger)' : 'var(--success)'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${r.th}</span></td>
+            <td>${r.prazo ? new Date(r.prazo).toLocaleString() : '-'}</td>
+            <td>${r.turno || '-'}</td>
+            <td>${r.contratado || '-'}</td>
+            <td>${r.solicitante || '-'}</td>
+            <td>${r.responsavel || '-'}</td>
+            <td><div style="max-height: 50px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;">${r.observacao || '-'}</div></td>
+            <td class="admin-only" style="text-align: center;">
+                <div style="display: flex; gap: 0.3rem; justify-content: center;">
+                    <button class="btn-control edit" onclick="openSecurityFormModal(${r.id})" style="background: var(--warning); padding: 5px; height: 30px; width: 30px;">✏️</button>
+                    <button class="btn-control delete" onclick="deleteSecurityRecord(${r.id})" style="background: var(--danger); padding: 5px; height: 30px; width: 30px;">🗑️</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function handleSecurityExcelUpload(event) {
+    if (prompt('Senha admin:') !== '789512') return;
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        try {
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            // Map Excel columns to our fields
+            const imported = jsonData.map((row, index) => {
+                const maxId = securityRecords.reduce((max, r) => Math.max(max, r.id || 0), 0);
+                return {
+                    id: maxId + index + 1,
+                    atividade: row['ATIVIDADE'] || row['Tarefa'] || '',
+                    th: (String(row['TH']).toUpperCase().includes('SIM')) ? 'SIM' : 'NÃO',
+                    prazo: row['PRAZO'] || row['Data'] || '',
+                    turno: row['TURNO'] || 'M',
+                    contratado: row['CONTRATADO/SUBSTITUÍDO'] || row['Contratado'] || '',
+                    solicitante: row['SOLICITANTE'] || '',
+                    responsavel: row['RESPONSÁVEL'] || '',
+                    observacao: row['OBSERVAÇÃO'] || ''
+                };
+            });
+
+            securityRecords = [...securityRecords, ...imported];
+            saveSecurityData();
+            renderSecurityList();
+            alert(`✅ ${imported.length} registros importados com sucesso!`);
+        } catch (err) {
+            console.error("Error importing security excel:", err);
+            alert("Erro ao ler arquivo Excel.");
+        }
+    };
+    reader.readAsArrayBuffer(file);
+    event.target.value = ''; // Reset input
 }

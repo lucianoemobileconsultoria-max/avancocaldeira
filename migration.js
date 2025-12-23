@@ -76,7 +76,8 @@ function addMigrationButton() {
     }
 
     const userSection = document.querySelector('.user-section');
-    if (userSection && document.getElementById('adminBtn')) {
+    const adminBtn = document.getElementById('adminBtn');
+    if (userSection && adminBtn && adminBtn.parentNode === userSection) {
         const migrationBtn = document.createElement('button');
         migrationBtn.id = 'migrationBtn';
         migrationBtn.className = 'btn-admin';
@@ -84,8 +85,6 @@ function addMigrationButton() {
         migrationBtn.onclick = migrateOldDataToShared;
         migrationBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
 
-        // Insert before admin button
-        const adminBtn = document.getElementById('adminBtn');
         userSection.insertBefore(migrationBtn, adminBtn);
     }
 }

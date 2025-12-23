@@ -739,28 +739,35 @@ body {
 /* Upload Section */
 .upload-section {
     margin-top: 2rem;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
 }
 
 .btn-upload {
     display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: center;
+    gap: 0.5rem;
     background: linear-gradient(135deg, var(--secondary), var(--accent));
     color: white;
-    padding: 1rem 2rem;
-    border-radius: 16px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 12px;
     border: 2px solid #000000;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 0 #000000, 0 10px 25px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 0 #000000, 0 6px 15px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 350px;
+    /* Alinha o tamanho pelo maior botão conceituável */
 }
 
 .btn-upload:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #000000, 0 8px 20px rgba(139, 92, 246, 0.4);
 }
 
 .btn-upload:active {
@@ -1892,4 +1899,129 @@ body.is-admin .admin-only {
 
 .modal-body {
     padding: 1rem 0;
+}
+
+/* Security Control Header Button */
+.header-actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    flex-basis: 100%;
+    /* Force new line centered */
+}
+
+.btn-control.btn-security {
+    background: var(--secondary) !important;
+    color: white !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem 3rem !important;
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    white-space: nowrap;
+    width: auto !important;
+    /* Force override of fixed width */
+    height: auto !important;
+    /* Force override of fixed height */
+    min-width: 320px;
+    border: 3px solid #000 !important;
+    box-shadow: 0 6px 0 #000 !important;
+    border-radius: 16px !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-control.btn-security:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 #000 !important;
+}
+
+.btn-control.btn-security:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #000 !important;
+}
+
+.btn-security .btn-icon {
+    font-size: 1.6rem;
+}
+
+/* Security Table Styles */
+.security-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.security-table-wrapper {
+    overflow-x: auto;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-top: 1rem;
+}
+
+.security-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1200px;
+}
+
+.security-table th {
+    padding: 1.25rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.security-table td {
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+    color: var(--text-primary) !important;
+    vertical-align: middle;
+}
+
+.security-table tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.form-group.full-width {
+    grid-column: span 2;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.badge {
+    padding: 0.3rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+    .btn-control.btn-security {
+        width: 100% !important;
+        font-size: 1rem !important;
+        min-width: unset;
+        padding: 0.8rem 1.5rem !important;
+    }
 }

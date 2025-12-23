@@ -15,7 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 
 <body>
@@ -27,7 +27,8 @@
                     <div class="logo-icon">🏭</div>
                     <div>
                         <h1 class="title">Sistema de Controle</h1>
-                        <p class="subtitle">Atividades de Manutenção - Caldeira</p>
+                        <p class="subtitle">Atividades de Manutenção - Caldeira <span
+                                style="opacity: 0.6; font-size: 0.8rem;">v3.0.0</span></p>
                     </div>
                 </div>
                 <div class="stats-container">
@@ -134,6 +135,11 @@
                 <button onclick="exportToExcel()" class="btn-upload" style="background: #10b981;">
                     📥 Exportar para Excel
                 </button>
+
+                <button id="securityBtnMain" onclick="openSecurityModal()" class="btn-upload"
+                    style="background: #10b981;">
+                    🛡️ Controle de Segurança
+                </button>
             </div>
         </div> <!-- End Activities Tab Content -->
 
@@ -208,7 +214,7 @@
         </div>
 
         <!-- S-Curve Tab Content -->
-        <div class="tab-content hidden" id="sCurveTabContent">
+        <div class="tab-content" id="sCurveTabContent" style="display: none;">
             <div class="scurve-container">
                 <div class="scurve-header">
                     <h2>📈 Curva S - Progresso Acumulado</h2>
@@ -234,6 +240,7 @@
         <div class="user-section footer-user">
             <div id="userDisplay" class="user-email"></div>
             <div class="user-actions">
+                <span style="font-size: 0.7rem; opacity: 0.5; margin-right: 1rem;">Version 3.0.0</span>
                 <button id="adminBtn" class="btn-admin" onclick="openAdminPanel()" style="display: none;">👤
                     Admin</button>
                 <button id="logoutBtn" class="btn-logout" onclick="handleLogout()">🚪 Sair</button>
@@ -288,9 +295,113 @@
         </div>
     </div>
 
-    <script src="firebase-config.js"></script>
-    <script src="script.js"></script>
-    <script src="migration.js"></script>
+    <!-- Security Control Modal (List View) -->
+    <div id="securityModal" class="modal">
+        <div class="modal-content" style="max-width: 95vw; width: 1200px;">
+            <div class="modal-header">
+                <h2>🛡️ Controle de Segurança</h2>
+                <button class="modal-close" onclick="closeSecurityModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="section-actions security-actions">
+                    <button class="btn-control admin-only" onclick="openSecurityFormModal()"
+                        style="background: var(--success); color: white;">➕ Novo Registro</button>
+                    <label for="securityExcelInput" class="btn-control admin-only"
+                        style="background: var(--primary); color: white; cursor: pointer;">
+                        📊 Importar Excel
+                    </label>
+                    <input type="file" id="securityExcelInput" accept=".xlsx, .xls" style="display: none;"
+                        onchange="handleSecurityExcelUpload(event)">
+                </div>
+                <div class="security-table-wrapper">
+                    <table class="security-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Atividade</th>
+                                <th>TH</th>
+                                <th>Prazo</th>
+                                <th>Turno</th>
+                                <th>Contratado/Substituído</th>
+                                <th>Solicitante</th>
+                                <th>Responsável</th>
+                                <th>Observação</th>
+                                <th class="admin-only" style="text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="securityTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Form Modal (Add/Edit) -->
+    <div id="securityFormModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="securityFormTitle">🛡️ Novo Registro de Segurança</h2>
+                <button class="modal-close" onclick="closeSecurityFormModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="securityEditId">
+                <div class="manual-form">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Atividade</label>
+                            <input type="text" id="secAtividade" class="filter-input"
+                                placeholder="Descrição da atividade">
+                        </div>
+                        <div class="form-group">
+                            <label>TH</label>
+                            <select id="secTH" class="filter-select">
+                                <option value="SIM">SIM</option>
+                                <option value="NÃO">NÃO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Turno</label>
+                            <select id="secTurno" class="filter-select">
+                                <option value="M">M</option>
+                                <option value="T">T</option>
+                                <option value="N">N</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Prazo (Data e Hora)</label>
+                            <input type="datetime-local" id="secPrazo" class="filter-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Contratado/Substituído</label>
+                            <input type="text" id="secContratado" class="filter-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Solicitante</label>
+                            <input type="text" id="secSolicitante" class="filter-input">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Responsável</label>
+                            <input type="text" id="secResponsavel" class="filter-input">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Observação</label>
+                            <textarea id="secObservacao" class="filter-input" style="min-height: 80px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-control" style="background: var(--success); color: white; flex: 1;"
+                            onclick="saveSecurityRecord()">💾 Salvar</button>
+                        <button class="btn-control" style="background: var(--danger); color: white; flex: 1;"
+                            onclick="closeSecurityFormModal()">❌ Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js?v=3"></script>
+    <script src="script.js?v=3"></script>
+    <script src="migration.js?v=3"></script>
 </body>
 
 </html>
