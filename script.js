@@ -67,10 +67,19 @@ async function loadActivities() {
     isLoadingActivities = true;
 
     // Try to load from saved activities first
-    const savedActivities = await loadSavedActivities();
+    let savedActivities = await loadSavedActivities();
 
     if (savedActivities && savedActivities.length > 0) {
-        activities = savedActivities;
+        // Remover duplicatas por uniqueKey por segurança
+        const unique = [];
+        const seen = new Set();
+        savedActivities.forEach(a => {
+            if (!seen.has(a.uniqueKey)) {
+                seen.add(a.uniqueKey);
+                unique.push(a);
+            }
+        });
+        activities = unique;
 
         // Migrate existing activities to add welds info if missing
         let needsUpdate = false;

@@ -36,10 +36,9 @@ auth.onAuthStateChanged(async (user) => {
             document.body.classList.remove('is-admin');
         }
 
-        // Only load if activities are empty to prevent duplication
-        if (typeof activities !== 'undefined' && activities.length === 0) {
-            await loadActivities();
-        }
+        // SEMPRE carregar do Firestore ao logar para garantir sincronismo
+        activities = []; // Limpar local antes de carregar nuvem
+        await loadActivities();
 
         // Then load progress from SHARED global collection
         loadProgressFromFirestore();
@@ -64,6 +63,7 @@ auth.onAuthStateChanged(async (user) => {
 
         // Load from localStorage instead
         loadProgressData();
+        loadActivities(); // Tentar carregar local caso deslogado
     }
 });
 
@@ -125,8 +125,10 @@ async function registerUser(email, password) {
 async function logoutUser() {
     try {
         await auth.signOut();
-        // Clear local progress data
+        // Clear local data
+        activities = [];
         progressData = {};
+        weldsData = {};
         renderActivities();
         return { success: true };
     } catch (error) {
