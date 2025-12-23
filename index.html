@@ -30,12 +30,6 @@
                         <p class="subtitle">Atividades de Manutenção - Caldeira</p>
                     </div>
                 </div>
-                <div class="user-section">
-                    <div id="userDisplay" class="user-email"></div>
-                    <button id="adminBtn" class="btn-admin" onclick="openAdminPanel()" style="display: none;">👤
-                        Admin</button>
-                    <button id="logoutBtn" class="btn-logout" onclick="handleLogout()">🚪 Sair</button>
-                </div>
                 <div class="stats-container">
                     <div class="stat-card">
                         <div class="stat-label">Total</div>
@@ -83,7 +77,8 @@
             <div class="filters">
                 <div class="filter-group">
                     <label for="filterSearch" class="filter-label">🔎 Buscar Atividade:</label>
-                    <input type="text" id="filterSearch" class="filter-input" placeholder="Digite para buscar...">
+                    <input type="text" id="filterSearch" class="filter-input" placeholder="Digite para buscar..."
+                        autocomplete="off" spellcheck="false">
                 </div>
                 <div class="filter-group">
                     <label for="filterID" class="filter-label">🔍 Filtrar por ID:</label>
@@ -122,7 +117,7 @@
 
             <!-- Upload Button -->
             <div class="upload-section" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-                <label for="fileInput" class="btn-upload">
+                <label for="fileInput" class="btn-upload admin-only">
                     📄 Importar Excel / Texto
                 </label>
                 <input type="file" id="fileInput" accept=".txt, .xlsx, .xls" style="display: none;">
@@ -234,6 +229,16 @@
                 </div>
             </div>
         </div> <!-- End S-Curve Tab Content -->
+
+        <!-- Footer User Section -->
+        <div class="user-section footer-user">
+            <div id="userDisplay" class="user-email"></div>
+            <div class="user-actions">
+                <button id="adminBtn" class="btn-admin" onclick="openAdminPanel()" style="display: none;">👤
+                    Admin</button>
+                <button id="logoutBtn" class="btn-logout" onclick="handleLogout()">🚪 Sair</button>
+            </div>
+        </div>
     </div>
 
     <!-- Login Modal -->

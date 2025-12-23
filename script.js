@@ -126,8 +126,8 @@ async function loadActivitiesFromFirestore() {
     try {
         if (typeof showSyncIndicator === 'function') showSyncIndicator('Carregando atividades da nuvem...');
 
-        const doc = await db.collection('users')
-            .doc(currentUser.uid)
+        const doc = await db.collection('shared_data')
+            .doc('activities')
             .get();
 
         if (typeof hideSyncIndicator === 'function') hideSyncIndicator();
@@ -165,12 +165,13 @@ async function saveActivitiesToFirestore() {
     try {
         if (typeof showSyncIndicator === 'function') showSyncIndicator('Salvando atividades na nuvem...');
 
-        // Save activities array as a single document
-        await db.collection('users')
-            .doc(currentUser.uid)
+        // Save activities array to shared location
+        await db.collection('shared_data')
+            .doc('activities')
             .set({
                 activities: activities,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                lastUpdatedBy: currentUser.email
             }, { merge: true });
 
         console.log(`${activities.length} atividades salvas no Firestore.`);

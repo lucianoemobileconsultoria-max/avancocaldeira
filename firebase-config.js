@@ -316,42 +316,6 @@ function setupRealtimeSync() {
         });
 }
 
-// ====== ACTIVITIES DATA (SHARED) ======
-
-// Load activities from Firestore (SHARED global collection)
-async function loadActivitiesFromFirestore() {
-    if (!currentUser) return null;
-
-    try {
-        const doc = await db.collection('shared_data').doc('activities').get();
-
-        if (doc.exists) {
-            const data = doc.data();
-            console.log('Activities loaded from Firestore');
-            return data.activities || [];
-        }
-        return null;
-    } catch (error) {
-        console.error('Error loading activities from Firestore:', error);
-        return null;
-    }
-}
-
-// Save activities to Firestore (SHARED global collection)
-async function saveActivitiesToFirestore(activities) {
-    if (!currentUser) return;
-
-    try {
-        await db.collection('shared_data').doc('activities').set({
-            activities: activities,
-            lastUpdatedBy: currentUser.email,
-            lastUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log('Activities saved to Firestore');
-    } catch (error) {
-        console.error('Error saving activities to Firestore:', error);
-    }
-}
 
 // ====== UI HELPER FUNCTIONS ======
 

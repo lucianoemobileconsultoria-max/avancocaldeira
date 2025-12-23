@@ -1340,38 +1340,53 @@ body {
 .user-section {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 1rem;
+    padding: 1.5rem;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
 }
 
 .user-email {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    display: none;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 700;
 }
 
 .btn-logout {
     background: linear-gradient(135deg, var(--danger), #dc2626);
     color: white;
-    border: none;
+    border: 2px solid #000000;
     border-radius: 12px;
     padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 700;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 0 #000000, 0 8px 16px rgba(0, 0, 0, 0.3);
     display: none;
     font-family: inherit;
 }
 
 .btn-logout:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 6px 0 #000000, 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
 .btn-logout:active {
-    transform: translateY(0);
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #000000, 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Login Modal */
@@ -1805,12 +1820,18 @@ body {
 /* Access Control */
 .item-actions,
 .section-actions,
+.controls,
+.welds-decrement,
+.welds-increment,
 .admin-only {
     display: none !important;
 }
 
 body.is-admin .item-actions,
-body.is-admin .section-actions {
+body.is-admin .section-actions,
+body.is-admin .controls,
+body.is-admin .welds-decrement,
+body.is-admin .welds-increment {
     display: flex !important;
 }
 
