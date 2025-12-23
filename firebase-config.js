@@ -36,8 +36,10 @@ auth.onAuthStateChanged(async (user) => {
             document.body.classList.remove('is-admin');
         }
 
-        // Load activities from Firestore first
-        await loadActivities();
+        // Only load if activities are empty to prevent duplication
+        if (typeof activities !== 'undefined' && activities.length === 0) {
+            await loadActivities();
+        }
 
         // Then load progress from SHARED global collection
         loadProgressFromFirestore();

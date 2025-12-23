@@ -5,6 +5,7 @@ let weldsData = {}; // Track completed welds for activities with soldas
 let currentRecordIndex = 0; // Index of currently displayed record
 let itemsPerPage = 5; // Number of records to show at once
 let sCurveChart = null; // Chart.js instance for S-Curve
+let isLoadingActivities = false; // Flag to prevent duplicate loads
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -62,6 +63,9 @@ function saveProgressData() {
 
 // Load activities (try saved first, then file)
 async function loadActivities() {
+    if (isLoadingActivities) return;
+    isLoadingActivities = true;
+
     // Try to load from saved activities first
     const savedActivities = await loadSavedActivities();
 
@@ -88,11 +92,13 @@ async function loadActivities() {
         console.log(`${activities.length} atividades carregadas.`);
         populateFilters();
         renderActivities();
+        isLoadingActivities = false;
         return;
     }
 
     // If no saved activities, try to load from file
     await loadActivitiesFromFile();
+    isLoadingActivities = false;
 }
 
 // Load saved activities from localStorage or Firestore
@@ -200,7 +206,7 @@ async function loadActivitiesFromFile() {
 // Parse activities from text content
 function parseActivitiesFromText(text) {
     const lines = text.split('\n').filter(line => line.trim());
-    activities = [];
+    activities = []; // Clear existing to prevent duplication
 
     if (lines.length < 2) return;
 
