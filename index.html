@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -47,6 +48,19 @@
                     <div class="stat-card">
                         <div class="stat-label">Progresso Geral</div>
                         <div class="stat-value progress" id="overallProgress">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label"
+                            style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            Críticas
+                            <span class="critical-indicator"
+                                style="display: inline-block; width: 10px; height: 10px; background: #ff0000; border-radius: 50%; box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; animation: pulse 2s infinite;"></span>
+                        </div>
+                        <div class="stat-value" id="criticalActivities" style="color: #ff0000;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Soldas OK</div>
+                        <div class="stat-value completed" id="totalWeldsStat">0 / 0 (0%)</div>
                     </div>
                 </div>
             </div>
@@ -107,13 +121,95 @@
             </div>
 
             <!-- Upload Button -->
-            <div class="upload-section">
+            <div class="upload-section" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
                 <label for="fileInput" class="btn-upload">
-                    📄 Carregar Novo Arquivo de Texto
+                    📄 Importar Excel / Texto
                 </label>
-                <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                <input type="file" id="fileInput" accept=".txt, .xlsx, .xls" style="display: none;">
+
+                <button onclick="openAddActivityModal()" class="btn-upload" style="background: var(--primary);">
+                    ➕ Novo Registro (Manual)
+                </button>
+
+                <button onclick="clearAllData()" class="btn-upload" style="background: #dc2626;">
+                    🗑️ Limpar Dados
+                </button>
+
+                <button onclick="exportToExcel()" class="btn-upload" style="background: #10b981;">
+                    📥 Exportar para Excel
+                </button>
             </div>
         </div> <!-- End Activities Tab Content -->
+
+        <!-- Manual Activity Modal -->
+        <div id="addActivityModal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>➕ Novo Registro Manual</h2>
+                    <button class="modal-close" onclick="closeAddActivityModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addActivityForm" class="admin-form" style="display: grid; gap: 1rem;">
+                        <input type="hidden" id="editingUniqueKey">
+                        <div class="filter-group">
+                            <label class="filter-label">ID da Atividade:</label>
+                            <input type="text" id="manualId" class="filter-input" placeholder="Ex: 1" required>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Nome da Tarefa:</label>
+                            <input type="text" id="manualName" class="filter-input" placeholder="Descrição da atividade"
+                                required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="filter-group">
+                                <label class="filter-label">Data Início:</label>
+                                <input type="text" id="manualStart" class="filter-input" placeholder="DD/MM/YYYY"
+                                    required>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Data Término:</label>
+                                <input type="text" id="manualEnd" class="filter-input" placeholder="DD/MM/YYYY"
+                                    required>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="filter-group">
+                                <label class="filter-label">Duração:</label>
+                                <input type="text" id="manualDuration" class="filter-input" placeholder="Ex: 152 h">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">V. Avanço/Soldas (Total):</label>
+                                <input type="number" id="manualTotalWelds" class="filter-input" placeholder="Ex: 24">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="filter-group">
+                                <label class="filter-label">Crítica?</label>
+                                <select id="manualCritical" class="filter-select">
+                                    <option value="NÃO">NÃO</option>
+                                    <option value="SIM">SIM</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Atividade Pai (Resumo)?</label>
+                                <select id="manualSummary" class="filter-select">
+                                    <option value="NÃO">NÃO (Sub-tarefa)</option>
+                                    <option value="SIM">SIM (Cabeçalho/Grupo)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-control"
+                        style="width: auto; padding: 0 2rem; background: var(--success); color: white;"
+                        onclick="saveManualActivity()">💾 Salvar Atividade</button>
+                    <button class="btn-control"
+                        style="width: auto; padding: 0 2rem; background: var(--danger); color: white;"
+                        onclick="closeAddActivityModal()">❌ Cancelar</button>
+                </div>
+            </div>
+        </div>
 
         <!-- S-Curve Tab Content -->
         <div class="tab-content hidden" id="sCurveTabContent">
@@ -166,7 +262,7 @@
     </div>
 
     <!-- Admin Panel Modal -->
-    <div id="adminModal" class="modal" style="display: none;">
+    <div id="adminModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-logo">👤</div>
