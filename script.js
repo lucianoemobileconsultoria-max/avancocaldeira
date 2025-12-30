@@ -1,4 +1,4 @@
-﻿// Global variables
+// Global variables
 let activities = [];
 let progressData = {};
 let weldsData = {}; // Track completed welds for activities with soldas
@@ -10,6 +10,31 @@ let securityRecords = []; // Tracking security records separately
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    // Clear search field to prevent autocomplete - IMMEDIATE
+    const searchField = document.getElementById('filterSearch');
+    if (searchField) {
+        searchField.value = '';
+
+        // Remove readonly after a short delay to allow typing
+        setTimeout(() => {
+            searchField.removeAttribute('readonly');
+        }, 50);
+
+        // Also clear after delays to counter browser autocomplete
+        setTimeout(() => { searchField.value = ''; }, 100);
+        setTimeout(() => { searchField.value = ''; }, 300);
+        setTimeout(() => { searchField.value = ''; }, 600);
+        setTimeout(() => { searchField.value = ''; }, 1000);
+
+        // Add input listener to prevent any programmatic filling
+        searchField.addEventListener('input', (e) => {
+            // If value contains '@' (likely an email), clear it
+            if (e.target.value.includes('@') && !e.isTrusted) {
+                e.target.value = '';
+            }
+        });
+    }
+
     loadProgressData();
     loadWeldsData(); // Load welds tracking data
     loadActivities(); // Try to load saved activities first
@@ -94,12 +119,23 @@ async function loadActivities() {
         // Migrate existing activities to add welds info if missing
         let needsUpdate = false;
         activities.forEach(activity => {
+            let infoChanged = false;
+            // Migration for missing info
             if (activity.hasWelds === undefined || activity.totalWelds === undefined) {
                 const weldsInfo = extractWeldsInfo(activity.name);
                 activity.hasWelds = weldsInfo.hasWelds;
                 activity.totalWelds = weldsInfo.totalWelds;
-                needsUpdate = true;
+                infoChanged = true;
             }
+
+            // Correction for 0 welds (Legacy data might have hasWelds=true for 0 welds)
+            if (activity.hasWelds && (activity.totalWelds === 0 || !activity.totalWelds)) {
+                activity.hasWelds = false;
+                activity.totalWelds = 0;
+                infoChanged = true;
+            }
+
+            if (infoChanged) needsUpdate = true;
         });
 
         // Save updated activities if migration was needed
@@ -482,7 +518,11 @@ function getProgressGradient(percentage) {
 // Extract welds information
 function extractWeldsInfo(name) {
     const match = name.match(/\((\d+)\s*SOLDAS?\)/i);
-    return match ? { hasWelds: true, totalWelds: parseInt(match[1], 10) } : { hasWelds: false, totalWelds: 0 };
+    if (match) {
+        const total = parseInt(match[1], 10);
+        return { hasWelds: total > 0, totalWelds: total };
+    }
+    return { hasWelds: false, totalWelds: 0 };
 }
 
 // Load welds data
@@ -535,7 +575,29 @@ function updateWeldsDisplay(key, val, total) {
         if (percEl) percEl.textContent = `(${p}%)`;
         const bar = el.closest('.welds-control').querySelector('.welds-bar-fill');
         if (bar) { bar.style.width = `${p}%`; bar.style.background = getProgressGradient(p); }
+
+        // NOVO: Atualizar também a barra de progresso "Real" baseada nas soldas
+        const item = document.querySelector(`.activity-item[data-key="${key}"]`);
+        if (item) {
+            const realPercEl = item.querySelector('.progress-bar-row:first-child .progress-percentage');
+            const realBar = item.querySelector('.progress-bar-row:first-child .progress-bar');
+            if (realPercEl) realPercEl.textContent = `${p}%`;
+            if (realBar) {
+                realBar.style.width = `${p}%`;
+                realBar.style.background = getProgressGradient(p);
+            }
+            // Atualizar classe completed se 100%
+            if (p === 100) item.classList.add('completed');
+            else item.classList.remove('completed');
+        }
     }
+
+    // Atualizar estatísticas da seção (grupo)
+    const a = activities.find(x => x.uniqueKey === key);
+    if (a) updateSectionStats(a.id);
+
+    // Atualizar estatísticas gerais
+    updateStats();
 }
 
 // Progress logic
@@ -639,6 +701,14 @@ function createActivityHierarchy(list) {
     const hierarchy = [];
     Object.keys(grouped).sort((a, b) => parseInt(a) - parseInt(b)).forEach(id => {
         const group = grouped[id];
+
+        // Fix: If an ID has only 1 item, treat it as standalone regardless of its Summary status.
+        // This ensures "Parent" items with no children are rendered as editable cards.
+        if (group.length === 1) {
+            hierarchy.push({ type: 'standalone', id, activity: group[0] });
+            return;
+        }
+
         const parent = group.find(x => (x.summary || '').toUpperCase().trim() === 'SIM');
         const children = group.filter(x => ['NAO', 'NÃO'].includes((x.summary || '').toUpperCase().trim()));
         const others = group.filter(x => !['SIM', 'NAO', 'NÃO'].includes((x.summary || '').toUpperCase().trim()));
@@ -650,15 +720,28 @@ function createActivityHierarchy(list) {
 }
 
 // Stats
+
+// Helper function to get the REAL progress of an activity (soldas ou manual)
+function getRealProgress(activity) {
+    if (activity.hasWelds && activity.totalWelds > 0) {
+        // Progresso baseado em soldas
+        return Math.round((getWeldsCompleted(activity.uniqueKey) / activity.totalWelds) * 100);
+    }
+    // Progresso manual
+    return getProgress(activity.uniqueKey);
+}
+
 function calculateSectionProgress(list) {
     if (list.length === 0) return 0;
-    return Math.round(list.reduce((sum, a) => sum + getProgress(a.uniqueKey), 0) / list.length);
+    return Math.round(list.reduce((sum, a) => sum + getRealProgress(a), 0) / list.length);
 }
 function calculateStats() {
     const t = activities.length;
-    const c = activities.filter(a => getProgress(a.uniqueKey) === 100).length;
+    // Contar concluídas baseado no progresso REAL (soldas ou manual)
+    const c = activities.filter(a => getRealProgress(a) === 100).length;
     const crit = activities.filter(a => (a.critical || '').toUpperCase().trim() === 'SIM').length;
-    const p = t > 0 ? Math.round(activities.reduce((sum, a) => sum + getProgress(a.uniqueKey) / 100, 0) / t * 100) : 0;
+    // Calcular progresso geral baseado no progresso REAL
+    const p = t > 0 ? Math.round(activities.reduce((sum, a) => sum + getRealProgress(a) / 100, 0) / t * 100) : 0;
 
     // Welds stats
     let totalWelds = 0;
@@ -669,6 +752,7 @@ function calculateStats() {
             completedWelds += getWeldsCompleted(a.uniqueKey);
         }
     });
+
 
     return { total: t, completed: c, critical: crit, overallProgress: p, totalWelds, completedWelds };
 }
@@ -706,15 +790,17 @@ function renderActivities() {
         sec.className = 'activity-section';
         if (group.type === 'standalone') {
             const a = group.activity;
-            const p = getProgress(a.uniqueKey);
+            const p = getRealProgress(a);
+            const exp = calculateExpectedProgress(a);
             const crit = (a.critical || '').toUpperCase().trim() === 'SIM' ? '<span class="critical-indicator" style="display: inline-block; width: 10px; height: 10px; background: #ff0000; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #ff0000; animation: pulse 2s infinite;" title="Crítica"></span>' : '';
             sec.innerHTML = `
                 <div class="section-header">
                     <div class="section-id">${a.id}</div>
                     <div class="section-title"><h2>${a.name}${crit}</h2><p>Individual</p></div>
                     <div class="section-stats">
-                        <div class="section-progress">${p}%</div>
+                        <div class="section-progress" style="color: #ffffff;">${p}%</div>
                         <div class="section-count">${p === 100 ? 'Concluída' : 'Em andamento'}</div>
+                        <div class="section-expected" style="color: #ffffff; opacity: 0.7; font-size: 0.85rem; margin-top: 0.25rem;">Previsto: ${exp}%</div>
                         <div class="section-actions" style="margin-top: 0.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
                             <button class="btn-control edit" onclick="editActivity('${a.uniqueKey}')" style="background: var(--warning); padding: 0.3rem 0.6rem; font-size: 0.9rem; width: auto; height: auto;" title="Editar">✏️</button>
                             <button class="btn-control delete" onclick="deleteActivity('${a.uniqueKey}')" style="background: var(--danger); padding: 0.3rem 0.6rem; font-size: 0.9rem; width: auto; height: auto;" title="Excluir">🗑️</button>
@@ -723,19 +809,24 @@ function renderActivities() {
                 </div>
                 <div class="activities-list">${renderActivity(a, false)}</div>`;
         } else {
-            const p = Math.round((group.parent ? getProgress(group.parent.uniqueKey) : 0 + group.children.reduce((s, c) => s + getProgress(c.uniqueKey), 0) + (group.others || []).reduce((s, o) => s + getProgress(o.uniqueKey), 0)) / ((group.parent ? 1 : 0) + group.children.length + (group.others || []).length));
+            // Calcular progresso médio do grupo (parent + children + others)
             const all = (group.parent ? [group.parent] : []).concat(group.children, group.others || []);
-            const comp = all.filter(x => getProgress(x.uniqueKey) === 100).length;
+            const totalProgress = all.reduce((sum, activity) => sum + getRealProgress(activity), 0);
+            const p = all.length > 0 ? Math.round(totalProgress / all.length) : 0;
+            const comp = all.filter(x => getRealProgress(x) === 100).length;
             const title = group.parent ? group.parent.name : (group.children[0]?.name || 'Grupo');
             const crit = group.parent && (group.parent.critical || '').toUpperCase().trim() === 'SIM' ? '<span class="critical-indicator" style="display: inline-block; width: 10px; height: 10px; background: #ff0000; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #ff0000; animation: pulse 2s infinite;" title="Crítica"></span>' : '';
             const meta = group.parent ? `<div class="section-meta" style="display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);"><span>📅 ${group.parent.startDate} - ${group.parent.endDate}</span><span>⏱️ ${group.parent.calendar || '0 h'}</span></div>` : '';
+            // Calcular progresso previsto para a seção
+            const exp = group.parent ? calculateExpectedProgress(group.parent) : 0;
             sec.innerHTML = `
                 <div class="section-header">
                     <div class="section-id">${group.id}</div>
                     <div class="section-title"><h2>${title}${crit}</h2><p>${group.parent ? 'Atividade com sub-tarefas' : 'Grupo'}</p>${meta}</div>
                     <div class="section-stats">
-                        <div class="section-progress">${p}%</div>
+                        <div class="section-progress" style="color: #ffffff;">${p}%</div>
                         <div class="section-count">${comp}/${all.length} concluídas</div>
+                        <div class="section-expected" style="color: #ffffff; opacity: 0.7; font-size: 0.85rem; margin-top: 0.25rem;">Previsto: ${exp}%</div>
                         ${group.parent ? `
                         <div class="section-actions" style="margin-top: 0.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
                             <button class="btn-control edit" onclick="editActivity('${group.parent.uniqueKey}')" style="background: var(--warning); padding: 0.3rem 0.6rem; font-size: 0.9rem; width: auto; height: auto;" title="Editar">✏️</button>
@@ -753,17 +844,44 @@ function renderActivities() {
 
 function calculateExpectedProgress(a) {
     try {
-        const [sd, sm, sy] = a.startDate.split('/').map(Number);
-        const [ed, em, ey] = a.endDate.split('/').map(Number);
-        const s = new Date(sy, sm - 1, sd); const e = new Date(ey, em - 1, ed); const n = new Date();
-        if (n < s) return 0; if (n > e) return 100;
-        return Math.round(Math.min(100, Math.max(0, ((n - s) / (e - s)) * 100)));
+        let [sd, sm, sy] = a.startDate.split('/').map(Number);
+        let [ed, em, ey] = a.endDate.split('/').map(Number);
+
+        // Normalize 2-digit years
+        if (sy < 100) sy += 2000;
+        if (ey < 100) ey += 2000;
+
+        const s = new Date(sy, sm - 1, sd, 0, 0, 0); // Start of day
+        const e = new Date(ey, em - 1, ed, 23, 59, 59, 999); // End of day
+        const n = new Date(); // Now
+
+        if (n < s) return 0;
+        if (n > e) return 100;
+
+        // Avoid division by zero
+        const total = e - s;
+        if (total <= 0) return 100;
+
+        return Math.round(Math.min(100, Math.max(0, ((n - s) / total) * 100)));
     } catch (e) { return 0; }
 }
 
 function renderActivity(a, isChild = false) {
-    const p = getProgress(a.uniqueKey); const exp = calculateExpectedProgress(a);
-    const isComp = p === 100; const crit = (a.critical || '').toUpperCase().trim() === 'SIM' ? '<span class="critical-indicator" style="display: inline-block; width: 10px; height: 10px; background: #ff0000; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #ff0000; animation: pulse 2s infinite;" title="Crítica"></span>' : '';
+    // Se tiver soldas, usar progresso das soldas para a barra "Real", senão usar progresso manual
+    let p, realProgress;
+    if (a.hasWelds && a.totalWelds > 0) {
+        // Progresso baseado em soldas
+        realProgress = Math.round((getWeldsCompleted(a.uniqueKey) / a.totalWelds) * 100);
+        p = realProgress;
+    } else {
+        // Progresso manual (setas)
+        p = getProgress(a.uniqueKey);
+        realProgress = p;
+    }
+
+    const exp = calculateExpectedProgress(a);
+    const isComp = p === 100;
+    const crit = (a.critical || '').toUpperCase().trim() === 'SIM' ? '<span class="critical-indicator" style="display: inline-block; width: 10px; height: 10px; background: #ff0000; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #ff0000; animation: pulse 2s infinite;" title="Crítica"></span>' : '';
     const hist = progressData[a.uniqueKey]?.history || [];
     const markers = hist.map(h => `<div class="timeline-marker" style="left: ${h.value}%" title="${h.value}% em ${new Date(h.timestamp).toLocaleDateString()}"></div>`).join('');
 
@@ -783,17 +901,18 @@ function renderActivity(a, isChild = false) {
                         <span class="meta-item">⏱️ ${a.calendar || '0 h'}</span>
                     </div>
                 </div>
+                ${!a.hasWelds ? `
                 <div class="controls">
                     <button class="btn-control decrement" data-key="${a.uniqueKey}" data-action="decrement">▼</button>
                     <button class="btn-control increment" data-key="${a.uniqueKey}" data-action="increment">▲</button>
-                </div>
-                <div class="item-actions" style="display: flex; gap: 0.5rem; align-items: center; margin-left: 1rem;">
+                </div>` : ''}
+                <div class="item-actions" style="display: flex; gap: 0.5rem; align-items: center; margin-left: ${a.hasWelds ? 'auto' : '1rem'};">
                     <button class="btn-control edit" onclick="editActivity('${a.uniqueKey}')" title="Editar" style="background: var(--warning); padding: 0.3rem; height: 32px; width: 32px;">✏️</button>
                     <button class="btn-control delete" onclick="deleteActivity('${a.uniqueKey}')" title="Excluir" style="background: var(--danger); padding: 0.3rem; height: 32px; width: 32px;">🗑️</button>
                 </div>
             </div>
             <div class="progress-bars-wrapper">
-                <div class="progress-bar-row"><span class="progress-label">Real:</span><div class="progress-bar-container"><div class="progress-bar" style="width: ${p}%; background: ${getProgressGradient(p)};"></div>${markers}</div><span class="progress-percentage">${p}%</span></div>
+                <div class="progress-bar-row"><span class="progress-label">Real:</span><div class="progress-bar-container"><div class="progress-bar" style="width: ${realProgress}%; background: ${getProgressGradient(realProgress)};"></div>${a.hasWelds ? '' : markers}</div><span class="progress-percentage">${realProgress}%</span></div>
                 <div class="progress-bar-row"><span class="progress-label">Previsto:</span><div class="progress-bar-container"><div class="progress-bar expected" style="width: ${exp}%"></div></div><span class="progress-percentage">${exp}%</span></div>
             </div>
             ${a.hasWelds ? `
@@ -804,7 +923,6 @@ function renderActivity(a, isChild = false) {
                         <div class="welds-display"><span class="welds-value" data-key="${a.uniqueKey}">${getWeldsCompleted(a.uniqueKey)}</span><span class="welds-separator">/</span><span class="welds-total">${a.totalWelds}</span><span class="welds-percentage">(${a.totalWelds > 0 ? Math.round((getWeldsCompleted(a.uniqueKey) / a.totalWelds) * 100) : 0}%)</span></div>
                         <button class="btn-control welds-increment" data-key="${a.uniqueKey}" data-action="welds-increment">▲</button>
                     </div>
-                    <div class="welds-progress-bar"><div class="welds-bar-fill" style="width: ${a.totalWelds > 0 ? Math.round((getWeldsCompleted(a.uniqueKey) / a.totalWelds) * 100) : 0}%; background: ${getProgressGradient(a.totalWelds > 0 ? Math.round((getWeldsCompleted(a.uniqueKey) / a.totalWelds) * 100) : 0)};"></div></div>
                 </div>` : ''}
         </div>`;
 }
@@ -836,16 +954,85 @@ function updateRecordNavigator(start, end, total) {
 function showActivitiesTab() {
     document.getElementById('activitiesTabContent').style.display = 'block';
     document.getElementById('sCurveTabContent').style.display = 'none';
+    document.getElementById('weldClustersTabContent').style.display = 'none';
     document.getElementById('activitiesTab').classList.add('active');
     document.getElementById('sCurveTab').classList.remove('active');
+    document.getElementById('weldClustersTab').classList.remove('active');
 }
 
 function showSCurveTab() {
     document.getElementById('activitiesTabContent').style.display = 'none';
     document.getElementById('sCurveTabContent').style.display = 'block';
+    document.getElementById('weldClustersTabContent').style.display = 'none';
     document.getElementById('activitiesTab').classList.remove('active');
     document.getElementById('sCurveTab').classList.add('active');
+    document.getElementById('weldClustersTab').classList.remove('active');
     setTimeout(renderSCurve, 100);
+}
+
+function showWeldClustersTab() {
+    document.getElementById('activitiesTabContent').style.display = 'none';
+    document.getElementById('sCurveTabContent').style.display = 'none';
+    document.getElementById('weldClustersTabContent').style.display = 'block';
+    document.getElementById('activitiesTab').classList.remove('active');
+    document.getElementById('sCurveTab').classList.remove('active');
+    document.getElementById('weldClustersTab').classList.add('active');
+    setTimeout(renderWeldClusters, 100);
+}
+
+// Weld Clusters
+function renderWeldClusters() {
+    const container = document.getElementById('weldClustersContainer');
+    if (!container) return;
+
+    // Calculate totals
+    let totalWelds = 0;
+    let completedWelds = 0;
+
+    // Use stored welds data to be precise
+    activities.forEach(a => {
+        if (a.hasWelds) {
+            totalWelds += a.totalWelds || 0;
+            completedWelds += getWeldsCompleted(a.uniqueKey);
+        }
+    });
+
+    // Update stats
+    const totalEl = document.getElementById('clusterTotalWelds');
+    const compEl = document.getElementById('clusterCompletedWelds');
+    const progEl = document.getElementById('clusterProgress');
+
+    if (totalEl) totalEl.textContent = totalWelds;
+    if (compEl) compEl.textContent = completedWelds;
+    if (progEl) {
+        const p = totalWelds > 0 ? Math.round((completedWelds / totalWelds) * 100) : 0;
+        progEl.textContent = `${p}%`;
+    }
+
+    // Generate Grid
+    // Optimization: if simple total is enough, we just render boxes.
+    // Order: Render all completed first? Or mixed by activity? 
+    // "Cluster" usually implies contiguous blocks of memory. 
+    // Let's render them linearly: first all completed, then pending? 
+    // OR render them representing the actual state. Since we don't have "which exact weld is done", only "count", 
+    // visual representation of "X completed out of Y total" is best represented as filled cells first.
+
+    let html = '';
+    // Render completed welds
+    for (let i = 0; i < completedWelds; i++) {
+        html += '<div class="weld-cluster completed" title="Solda Concluída"></div>';
+    }
+    // Render pending welds
+    const pending = totalWelds - completedWelds;
+    for (let i = 0; i < pending; i++) {
+        html += '<div class="weld-cluster" title="Solda Pendente"></div>';
+    }
+
+    if (totalWelds === 0) {
+        html = '<div style="color: var(--text-secondary); padding: 2rem;">Nenhuma atividade com soldas encontrada.</div>';
+    }
+
+    container.innerHTML = html;
 }
 
 // S-Curve
@@ -995,19 +1182,25 @@ async function saveManualActivity() {
         const a = activities.find(x => x.uniqueKey === key);
         if (a) {
             Object.assign(a, { id, name, startDate: start, endDate: end, calendar: dur || '-', critical: crit, summary: sum });
-            if (tw && !isNaN(tw)) {
+            if (tw && !isNaN(tw) && parseInt(tw) > 0) {
                 a.hasWelds = true;
                 a.totalWelds = parseInt(tw);
                 if (!a.name.toLowerCase().includes('solda')) a.name += ` (${tw} SOLDAS)`;
+            } else {
+                a.hasWelds = false;
+                a.totalWelds = 0;
             }
         }
     } else {
         const uk = generateUniqueKey(id, name);
         const newAct = { id, name, startDate: start, endDate: end, calendar: dur || '-', critical: crit, summary: sum, uniqueKey: uk, statusText: 'PROXIMO' };
-        if (tw && !isNaN(tw)) {
+        if (tw && !isNaN(tw) && parseInt(tw) > 0) {
             newAct.hasWelds = true;
             newAct.totalWelds = parseInt(tw);
             if (!newAct.name.toLowerCase().includes('solda')) newAct.name += ` (${tw} SOLDAS)`;
+        } else {
+            newAct.hasWelds = false;
+            newAct.totalWelds = 0;
         }
         activities.push(newAct);
     }
