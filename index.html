@@ -69,6 +69,9 @@
             <button class="tab-button" id="sCurveTab" onclick="showSCurveTab()">
                 📈 Curva S
             </button>
+            <button class="tab-button" id="weldClustersTab" onclick="showWeldClustersTab()">
+                📊 Andamento
+            </button>
         </div>
 
         <!-- Activities Tab Content -->
@@ -79,7 +82,8 @@
                 <div class="filter-group">
                     <label for="filterSearch" class="filter-label">🔎 Buscar Atividade:</label>
                     <input type="text" id="filterSearch" class="filter-input" placeholder="Digite para buscar..."
-                        autocomplete="off" spellcheck="false">
+                        autocomplete="off" spellcheck="false" name="search-activity" data-form-type="other" readonly
+                        onfocus="this.removeAttribute('readonly');">
                 </div>
                 <div class="filter-group">
                     <label for="filterID" class="filter-label">🔍 Filtrar por ID:</label>
@@ -235,6 +239,49 @@
                 </div>
             </div>
         </div> <!-- End S-Curve Tab Content -->
+
+        <!-- Weld Clusters Tab Content -->
+        <div class="tab-content" id="weldClustersTabContent" style="display: none;">
+            <div class="scurve-container">
+                <div class="scurve-header">
+                    <h2>📊 Mapa de Soldas (Cluster View)</h2>
+                    <p>Visualização de todos os clusters de solda. Verde = Concluído.</p>
+                </div>
+
+                <div class="weld-stats-summary"
+                    style="margin-bottom: 1.5rem; display: flex; gap: 2rem; justify-content: center;">
+                    <div class="stat-card" style="min-width: 150px;">
+                        <div class="stat-label">Total de Soldas</div>
+                        <div class="stat-value" id="clusterTotalWelds">0</div>
+                    </div>
+                    <div class="stat-card" style="min-width: 150px;">
+                        <div class="stat-label">Soldas Realizadas</div>
+                        <div class="stat-value completed" id="clusterCompletedWelds">0</div>
+                    </div>
+                    <div class="stat-card" style="min-width: 150px;">
+                        <div class="stat-label">Progresso Soldas</div>
+                        <div class="stat-value progress" id="clusterProgress">0%</div>
+                    </div>
+                </div>
+
+                <div id="weldClustersContainer" class="weld-clusters-grid">
+                    <!-- Clusters will be generated here -->
+                </div>
+
+                <div class="scurve-legend" style="margin-top: 1.5rem;">
+                    <div class="legend-item">
+                        <span class="legend-color"
+                            style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);"></span>
+                        <span class="legend-label">Pendente</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color"
+                            style="background: var(--success); box-shadow: 0 0 10px var(--success);"></span>
+                        <span class="legend-label">Concluído</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Footer User Section -->
         <div class="user-section footer-user">
