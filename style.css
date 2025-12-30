@@ -332,10 +332,7 @@ body {
 .section-progress {
     font-size: 1.5rem;
     font-weight: 800;
-    background: linear-gradient(135deg, var(--success), #059669);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff;
 }
 
 .section-count {
@@ -2169,3 +2166,58 @@ body.is-admin th.admin-only {
         word-break: break-word;
     }
 }
+/* Weld Clusters Visualization */
+.weld-clusters-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    max-height: 60vh;
+    overflow-y: auto;
+    justify-content: center; /* Center the grid */
+}
+
+.weld-cluster {
+    width: 12px;
+    height: 12px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    cursor: pointer; /* Optional: adds interactivity hint */
+}
+
+.weld-cluster:hover {
+    transform: scale(1.5);
+    z-index: 10;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.weld-cluster.completed {
+    background-color: var(--success);
+    box-shadow: 0 0 5px var(--success);
+    border-color: var(--success);
+}
+
+/* Scrollbar for the grid */
+.weld-clusters-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.weld-clusters-grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.weld-clusters-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.weld-clusters-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
