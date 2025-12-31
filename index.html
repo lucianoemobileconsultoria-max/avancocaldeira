@@ -2,3381 +2,458 @@
 <html lang="pt-BR">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Visualizador Mapa PG G2 2026</title>
-	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-	<!-- Database & Caching Scripts -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-	<!-- Chart.js for Historical Dashboard -->
-	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-	<!-- SheetJS for Excel Export -->
-	<script src="https://cdn.sheetjs.com/xlsx-0.no gerenciador de atividade20.1/package/dist/xlsx.full.min.js"></script>
-	<style>
-		body {
-			margin: 0;
-			padding: 0;
-			font-family: sans-serif;
-		}
-
-		#map {
-			width: 100%;
-			height: 100vh;
-			display: none;
-		}
-
-		#loader {
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			background: #f0f0f0;
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			align-items: center;
-			z-index: 1000;
-		}
-
-		.container {
-			background: white;
-			padding: 2rem;
-			border-radius: 8px;
-			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-			text-align: center;
-		}
-
-		h2 {
-			color: #333;
-			margin-bottom: 1rem;
-		}
-
-		p {
-			color: #666;
-			margin-bottom: 2rem;
-		}
-
-		#fileInput {
-			display: none;
-		}
-
-		.btn {
-			background: #4CAF50;
-			color: white;
-			padding: 10px 20px;
-			border: none;
-			border-radius: 4px;
-			cursor: pointer;
-			font-size: 1rem;
-			transition: background 0.3s;
-		}
-
-		.btn:hover {
-			background: #45a049;
-		}
-
-		.leaflet-control-layers-list {
-			max-height: 80vh;
-			overflow-y: auto;
-		}
-
-		/* ===== MOBILE HAMBURGER MENU ===== */
-		/* Hamburger button - hidden on desktop */
-		#mobileMenuButton {
-			display: none;
-			position: fixed;
-			top: 15px;
-			right: 15px;
-			z-index: 2000;
-			background: white;
-			border: none;
-			width: 50px;
-			height: 50px;
-			border-radius: 50%;
-			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-			cursor: pointer;
-			font-size: 24px;
-			color: #333;
-		}
-
-		/* Mobile sidebar menu */
-		#mobileSidebar {
-			display: none;
-			position: fixed;
-			top: 0;
-			left: -300px;
-			width: 280px;
-			height: 100%;
-			background: white;
-			z-index: 1999;
-			box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-			transition: left 0.3s ease;
-			overflow-y: auto;
-			padding: 20px;
-		}
-
-		#mobileSidebar.open {
-			left: 0;
-		}
-
-		/* Overlay when menu is open */
-		#mobileOverlay {
-			display: none;
-			position: fixed;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			background: rgba(0, 0, 0, 0.5);
-			z-index: 1998;
-		}
-
-		/* Mobile-specific styles */
-		@media (max-width: 768px) {
-
-			/* Show hamburger button on mobile */
-			#mobileMenuButton {
-				display: block;
-			}
-
-			/* Show sidebar container on mobile */
-			#mobileSidebar {
-				display: block;
-			}
-
-			/* Hide desktop admin controls on mobile */
-			#admin-controls {
-				display: none !important;
-			}
-
-			/* Hide desktop timer on mobile */
-			#countdownTimer {
-				display: none !important;
-			}
-
-			/* Hide Leaflet layer controls on mobile */
-			.leaflet-control-layers {
-				display: none !important;
-			}
-
-			/* Hide ONLY the stats dashboard on mobile, NOT the zoom controls */
-			.info.stats {
-				display: none !important;
-			}
-
-			/* Ensure zoom controls are visible on mobile */
-			.leaflet-control-zoom {
-				display: block !important;
-			}
-
-			/* CRITICAL: Ensure popups work on mobile */
-			.leaflet-popup {
-				display: block !important;
-				z-index: 9999 !important;
-			}
-
-			.leaflet-popup-content-wrapper {
-				max-width: 90vw !important;
-				max-height: 70vh !important;
-				overflow-y: auto !important;
-			}
-
-			.leaflet-popup-content {
-				margin: 10px !important;
-				line-height: 1.4 !important;
-				font-size: 14px !important;
-			}
-		}
-
-		/* Hide dashboard stats card on mobile */
-		.leaflet-control-custom {
-			display: none !important;
-		}
-
-		/* Adjust Leaflet controls for mobile */
-		.leaflet-control-layers {
-			max-width: 90vw;
-		}
-
-		.leaflet-control-layers-expanded {
-			max-height: 60vh;
-			overflow-y: auto;
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Atividades - Caldeira</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 
 <body>
-
-	<div id="loader">
-		<div class="container">
-			<h2>Visualizador de Mapa KML</h2>
-			<p>Selecione o arquivo <strong>Mapa PG G2 2026.kml</strong> para visualizar.</p>
-			<input type="file" id="fileInput" accept=".kml">
-			<button class="btn" onclick="document.getElementById('fileInput').click()">Selecionar Arquivo</button>
-		</div>
-	</div>
-
-	<!-- MOBILE HAMBURGER MENU -->
-	<button id="mobileMenuButton" onclick="toggleMobileMenu()">☰</button>
-	<div id="mobileOverlay" onclick="toggleMobileMenu()"></div>
-	<div id="mobileSidebar">
-		<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-			<h3 style="margin: 0; color: #2e7d32;">Menu</h3>
-			<button onclick="toggleMobileMenu()"
-				style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">✕</button>
-		</div>
-		<div id="mobileMenuContent">
-			<!-- Content will be populated dynamically -->
-		</div>
-	</div>
-
-	<!-- LOGIN MODAL -->
-	<div id="loginModal"
-		style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); z-index: 3000; display: flex; justify-content: center; align-items: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-		<div
-			style="background: white; padding: 3rem; border-radius: 24px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);">
-
-			<!-- Logo/Title -->
-			<div style="margin-bottom: 2rem;">
-				<h1
-					style="margin: 0; font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, #2e7d32, #66bb6a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: 2px;">
-					INFRA PG
-				</h1>
-				<p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.9rem; font-weight: 500;">Sistema de Gestão de
-					Atividades</p>
-			</div>
-
-			<!-- Icon -->
-			<div style="margin-bottom: 2rem;">
-				<div
-					style="width: 80px; height: 80px; margin: 0 auto; background: linear-gradient(135deg, #43a047, #2e7d32); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3);">
-					<span style="font-size: 40px;">🔐</span>
-				</div>
-			</div>
-
-			<!-- Form -->
-			<div style="margin-bottom: 1.5rem; text-align: left;">
-				<label
-					style="display: block; margin-bottom: 0.5rem; color: #333; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">E-mail</label>
-				<input type="email" id="loginEmail" placeholder="seu@email.com"
-					style="width: 100%; padding: 14px 16px; margin-bottom: 1.2rem; box-sizing: border-box; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; transition: all 0.3s ease; outline: none;"
-					onfocus="this.style.borderColor='#43a047'; this.style.boxShadow='0 0 0 4px rgba(67, 160, 71, 0.1)'"
-					onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'">
-
-				<label
-					style="display: block; margin-bottom: 0.5rem; color: #333; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Senha</label>
-				<input type="password" id="loginPass" placeholder="••••••••"
-					style="width: 100%; padding: 14px 16px; box-sizing: border-box; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; transition: all 0.3s ease; outline: none;"
-					onfocus="this.style.borderColor='#43a047'; this.style.boxShadow='0 0 0 4px rgba(67, 160, 71, 0.1)'"
-					onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'">
-			</div>
-
-			<!-- Button -->
-			<button onclick="performLogin()"
-				style="width: 100%; padding: 16px; background: linear-gradient(135deg, #43a047, #2e7d32); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);"
-				onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(46, 125, 50, 0.4)'"
-				onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(46, 125, 50, 0.3)'">
-				ENTRAR
-			</button>
-
-			<!-- Error Message -->
-			<p id="loginError"
-				style="color: #f44336; margin-top: 1rem; display: none; font-weight: 600; font-size: 0.9rem; background: #ffebee; padding: 12px; border-radius: 8px; border-left: 4px solid #f44336;">
-			</p>
-		</div>
-	</div>
-
-	<div id="admin-controls"
-		style="position: absolute; top: 10px; left: 50px; z-index: 1000; background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.2);">
-		<label style="margin-right: 15px;">
-			<input type="checkbox" id="adminToggle"> 🔧 Modo Admin
-		</label>
-		<button id="btnConfig"
-			style="cursor: pointer; padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 4px; display: none;">⚙️
-			Config</button>
-		<button id="btnUsers"
-			style="cursor: pointer; padding: 5px 10px; background: #FF9800; color: white; border: none; border-radius: 4px; display: none; margin-left: 5px;">👥
-			Usuários</button>
-		<button id="btnExport"
-			style="cursor: pointer; padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; display: none; margin-left: 5px;">📥
-			Exportar Excel</button>
-		<button id="btnActivities"
-			style="cursor: pointer; padding: 5px 10px; background: #9C27B0; color: white; border: none; border-radius: 4px; display: none; margin-left: 5px;">📋
-			Tipos de Atividade</button>
-		<button id="btnChart"
-			style="cursor: pointer; padding: 5px 10px; background: #00BCD4; color: white; border: none; border-radius: 4px; display: none; margin-left: 5px;">📊
-			Gráfico</button>
-		<button id="btnUploadKML"
-			style="cursor: pointer; padding: 5px 10px; background: #673AB7; color: white; border: none; border-radius: 4px; display: none; margin-left: 5px;">📂
-			Upload KML</button>
-		<button onclick="performLogout()"
-			style="cursor: pointer; padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 4px; margin-left: 5px;">Sair</button>
-	</div>
-
-	<!-- ONLINE/OFFLINE STATUS INDICATOR -->
-	<div id="connectionStatus"
-		style="position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; padding: 8px 12px; border-radius: 4px; box-shadow: 0 0 5px rgba(0,0,0,0.2); font-size: 12px; font-weight: bold;">
-		<span id="statusIcon">🟢</span>
-		<span id="statusText">Online</span>
-		<span id="pendingCount" style="display: none; margin-left: 5px; color: #FF9800;"></span>
-	</div>
-
-	<!-- USERS MANAGEMENT MODAL -->
-	<div id="usersModal"
-		style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
-		<div style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90%;">
-			<h3>👥 Gerenciar Usuários</h3>
-			<hr>
-			<h4>Cadastrar Novo Usuário</h4>
-			<div style="display: flex; gap: 10px; margin-bottom: 20px;">
-				<input type="email" id="newEmail" placeholder="E-mail" style="flex: 1; padding: 5px;">
-				<input type="password" id="newPass" placeholder="Senha" style="flex: 1; padding: 5px;">
-				<button onclick="createNewUser()"
-					style="background: #4CAF50; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Criar</button>
-			</div>
-			<hr>
-			<h4>Lista de Usuários</h4>
-			<div id="usersList"
-				style="max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; border: 1px solid #ddd;">
-				Carregando...
-			</div>
-			<div style="margin-top: 20px; text-align: right;">
-				<button onclick="document.getElementById('usersModal').style.display='none'"
-					style="background: #777; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Fechar</button>
-			</div>
-		</div>
-	</div>
-
-	<!-- ACTIVITIES MANAGEMENT MODAL -->
-	<div id="activitiesModal"
-		style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
-		<div
-			style="background: white; padding: 2rem; border-radius: 8px; width: 900px; max-width: 95%; max-height: 90vh; overflow-y: auto;">
-			<h3>📋 Gerenciar Atividades</h3>
-			<p><small>Crie atividades e depois associe-as aos grupos/empresas.</small></p>
-			<hr>
-
-			<!-- SECTION 1: CRUD de Atividades -->
-			<div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-				<h4 style="margin-top: 0; color: #333;">➕ Criar Nova Atividade</h4>
-				<div style="display: flex; gap: 10px; margin-bottom: 15px;">
-					<input type="text" id="newActivityNameInput" placeholder="Ex: ABASTECIMENTO COPOS"
-						style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-					<button onclick="createNewActivity()"
-						style="background: #4CAF50; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-						➕ Criar
-					</button>
-				</div>
-
-				<h4 style="color: #333; margin-bottom: 10px;">📋 Atividades Cadastradas:</h4>
-				<div id="activitiesListCRUD"
-					style="max-height: 200px; overflow-y: auto; background: white; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-					<!-- Populated dynamically -->
-				</div>
-			</div>
-
-			<hr style="margin: 25px 0;">
-
-			<!-- SECTION 2: Associação aos Grupos -->
-			<h4 style="color: #333;">🏢 Associar Atividades aos Grupos</h4>
-			<p><small>Selecione um grupo e marque as atividades disponíveis para ele.</small></p>
-
-			<!-- Two-column layout -->
-			<div style="display: flex; gap: 15px; min-height: 350px;">
-
-				<!-- LEFT COLUMN: Groups -->
-				<div style="flex: 1; border-right: 2px solid #ddd; padding-right: 15px;">
-					<h4 style="margin-top: 0;">🏢 Grupos/Empresas:</h4>
-					<div id="groupsListForSelection" style="max-height: 350px; overflow-y: auto;">
-						<!-- Populated dynamically -->
-					</div>
-				</div>
-
-				<!-- RIGHT COLUMN: Activities -->
-				<div style="flex: 1; padding-left: 15px;">
-					<h4 style="margin-top: 0;">📋 Atividades:</h4>
-					<div id="activitiesListForSelection"
-						style="max-height: 350px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 4px;">
-						<p style="text-align: center; color: #999;">Selecione um grupo à esquerda</p>
-					</div>
-					<div style="margin-top: 10px; text-align: right;">
-						<button id="saveGroupActivitiesBtn" onclick="saveGroupActivities()" disabled
-							style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
-							💾 Salvar Associação
-						</button>
-					</div>
-				</div>
-
-			</div>
-
-			<hr style="margin-top: 20px;">
-			<div style="text-align: right;">
-				<button onclick="document.getElementById('activitiesModal').style.display='none'"
-					style="background: #777; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Fechar</button>
-			</div>
-		</div>
-	</div>
-
-	<!-- COUNTDOWN TIMER -->
-	<div id="countdownTimer"
-		style="position: fixed; top: 85px; left: 50%; transform: translateX(-50%); z-index: 1500; background: rgba(255,255,255,0.95); padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-family: monospace; font-size: 14px; font-weight: bold; text-align: center; min-width: 180px; display: none;">
-		<div style="font-size: 11px; color: #666; margin-bottom: 3px;">⏱️ Tempo até Reset:</div>
-		<div id="timerDisplay" style="font-size: 20px; color: #2e7d32;">--:--:--</div>
-	</div>
-
-	<!-- CHART MODAL -->
-	<div id="chartModal"
-		style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; justify-content: center; align-items: center;">
-		<div
-			style="background: white; padding: 2rem; border-radius: 12px; width: 90%; max-width: 1000px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-				<h2 style="margin: 0; color: #333;">📊 Evolução Diária das Atividades</h2>
-				<button onclick="closeChartModal()"
-					style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">✕
-					Fechar</button>
-			</div>
-			<div id="chartLoadingMsg" style="text-align: center; padding: 40px; color: #666; display: none;">
-				<p style="font-size: 18px;">📦 Carregando dados históricos...</p>
-			</div>
-			<div id="chartErrorMsg" style="text-align: center; padding: 40px; color: #f44336; display: none;">
-				<p style="font-size: 16px;"></p>
-			</div>
-			<div id="chartContainer" style="position: relative; height: 500px; display: none;">
-				<canvas id="activityChart"></canvas>
-			</div>
-		</div>
-	</div>
-
-	<!-- Config Modal -->
-	<div id="configModal"
-		style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
-		<div style="background: white; padding: 2rem; border-radius: 8px; width: 400px; max-width: 90%;">
-			<h3>Configuração do Banco de Dados (Firebase)</h3>
-			<p><small>Cole as chaves geradas no passo 3 do guia.</small></p>
-
-			<div style="margin-bottom: 1rem;">
-				<label>API Key:</label><br>
-				<input type="text" id="apiKeyInput" style="width: 100%; padding: 5px;">
-			</div>
-
-			<div style="margin-bottom: 1rem;">
-				<label>Project ID:</label><br>
-				<input type="text" id="projectIdInput" style="width: 100%; padding: 5px;">
-			</div>
-
-			<button onclick="saveConfig()"
-				style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Salvar
-				e Conectar</button>
-			<button onclick="document.getElementById('configModal').style.display='none'"
-				style="background: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-left: 10px;">Cancelar</button>
-		</div>
-	</div>
-
-	<!-- KML UPLOAD MODAL -->
-	<div id="kmlUploadModal"
-		style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
-		<div style="background: white; padding: 2rem; border-radius: 8px; width: 500px; max-width: 90%;">
-			<h3>📂 Upload de Arquivo KML</h3>
-			<p><small>Selecione o arquivo .kml para atualizar o mapa do sistema.</small></p>
-			<hr>
-
-			<div style="margin-bottom: 1.5rem;">
-				<label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;">Arquivo
-					KML:</label>
-				<input type="file" id="kmlFileInput" accept=".kml"
-					style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">
-				<div id="kmlFilePreview"
-					style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px; display: none;">
-					<strong>Arquivo selecionado:</strong> <span id="kmlFileName"></span>
-				</div>
-			</div>
-
-			<div id="kmlUploadStatus" style="margin-bottom: 1rem; padding: 10px; border-radius: 4px; display: none;">
-			</div>
-
-			<div style="display: flex; gap: 10px; justify-content: flex-end;">
-				<button onclick="closeKMLUploadModal()"
-					style="background: #777; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancelar</button>
-				<button id="btnConfirmKMLUpload" onclick="handleKMLUpload()" disabled
-					style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📤
-					Fazer Upload</button>
-			</div>
-		</div>
-	</div>
-
-	<div id="map"></div>
-
-	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-	<!-- Add Auth SDK -->
-	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-
-	<script>
-		const fileInput = document.getElementById('fileInput');
-		const loader = document.getElementById('loader');
-		const mapDiv = document.getElementById('map');
-		const adminToggle = document.getElementById('adminToggle');
-		const btnConfig = document.getElementById('btnConfig');
-		const btnUsers = document.getElementById('btnUsers');
-
-		const btnExport = document.getElementById('btnExport');
-		const btnActivities = document.getElementById('btnActivities');
-
-		let isAdmin = false;
-		let userProfile = null; // Tipo de perfil: 'admin' ou 'infracmpc' ou null
-		let db = null;
-		let auth = null;
-		let currentUser = null;
-
-		let activitiesCache = {};
-		let activityTypesCache = []; // Cache for standard activity types
-		let allPlacemarksData = []; // Store parsed KML data for export
-
-		// ===== OFFLINE SYNC SYSTEM =====
-		let isOnline = navigator.onLine;
-		let syncQueue = []; // Queue for offline operations
-		const SYNC_QUEUE_KEY = 'offlineSyncQueue';
-
-		// Load sync queue from localStorage
-		function loadSyncQueue() {
-			try {
-				const saved = localStorage.getItem(SYNC_QUEUE_KEY);
-				if (saved) {
-					syncQueue = JSON.parse(saved);
-					updateConnectionStatus();
-				}
-			} catch (e) {
-				console.error('Error loading sync queue:', e);
-				syncQueue = [];
-			}
-		}
-
-		// Save sync queue to localStorage
-		function saveSyncQueue() {
-			try {
-				localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(syncQueue));
-				updateConnectionStatus();
-			} catch (e) {
-				console.error('Error saving sync queue:', e);
-			}
-		}
-
-		// Add operation to sync queue
-		function addToSyncQueue(operation) {
-			operation.timestamp = Date.now();
-			operation.id = `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-			syncQueue.push(operation);
-			saveSyncQueue();
-			console.log('📥 Added to sync queue:', operation.type);
-		}
-
-		// Update connection status UI
-		function updateConnectionStatus() {
-			const statusIcon = document.getElementById('statusIcon');
-			const statusText = document.getElementById('statusText');
-			const pendingCount = document.getElementById('pendingCount');
-
-			if (!statusIcon || !statusText) return;
-
-			if (isOnline) {
-				statusIcon.textContent = '🟢';
-				statusText.textContent = 'Online';
-				statusIcon.parentElement.style.background = 'white';
-			} else {
-				statusIcon.textContent = '🔴';
-				statusText.textContent = 'Offline';
-				statusIcon.parentElement.style.background = '#fff3cd';
-			}
-
-			// Show pending operations count
-			if (syncQueue.length > 0) {
-				pendingCount.textContent = `(${syncQueue.length} pendente${syncQueue.length > 1 ? 's' : ''})`;
-				pendingCount.style.display = 'inline';
-			} else {
-				pendingCount.style.display = 'none';
-			}
-		}
-
-		// Process sync queue
-		async function processSyncQueue() {
-			if (!isOnline || !db || syncQueue.length === 0) {
-				return;
-			}
-
-			console.log(`🔄 Processing ${syncQueue.length} queued operations...`);
-			const failedOperations = [];
-
-			for (const operation of syncQueue) {
-				try {
-					await processQueuedOperation(operation);
-					console.log(`✅ Synced: ${operation.type}`);
-				} catch (error) {
-					console.error(`❌ Failed to sync: ${operation.type}`, error);
-					failedOperations.push(operation);
-				}
-			}
-
-			// Keep only failed operations in queue
-			syncQueue = failedOperations;
-			saveSyncQueue();
-
-			if (failedOperations.length === 0) {
-				console.log('✅ All operations synced successfully!');
-				alert('✅ Todas as alterações offline foram sincronizadas!');
-			} else {
-				console.warn(`⚠️ ${failedOperations.length} operations failed to sync`);
-			}
-		}
-
-		// Process individual queued operation
-		async function processQueuedOperation(operation) {
-			switch (operation.type) {
-				case 'saveActivity':
-					return db.collection('activities').doc(operation.key).set(operation.data, { merge: true });
-
-				case 'completeActivity':
-					return db.collection('activities').doc(operation.key).set(operation.data, { merge: true });
-
-				case 'addActivityType':
-					return db.collection('activity_types').add(operation.data);
-
-				case 'updateActivityType':
-					return db.collection('activity_types').doc(operation.id).update(operation.data);
-
-				case 'deleteActivityType':
-					return db.collection('activity_types').doc(operation.id).delete();
-
-				default:
-					console.warn('Unknown operation type:', operation.type);
-			}
-		}
-
-		// Listen for online/offline events
-		window.addEventListener('online', () => {
-			console.log('🟢 Connection restored!');
-			isOnline = true;
-			updateConnectionStatus();
-
-			// Remove offline banner if it exists
-			if (window.offlineMessageControl && map) {
-				map.removeControl(window.offlineMessageControl);
-				window.offlineMessageControl = null;
-
-				// Show temporary "back online" message
-				const onlineControl = L.control({ position: 'bottomleft' });
-				onlineControl.onAdd = function () {
-					const div = L.DomUtil.create('div', 'online-message');
-					div.innerHTML = `<div style="background: rgba(76,175,80,0.95); padding: 10px 15px; border-radius: 6px; font-size: 13px; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid #4CAF50; animation: fadeIn 0.3s;">
-					<strong>🟢 CONEXÃO RESTAURADA!</strong><br>
-					<small>Sincronizando dados...</small>
-				</div>`;
-					return div;
-				};
-				onlineControl.addTo(map);
-
-				// Remove after 3 seconds
-				setTimeout(() => {
-					if (map) map.removeControl(onlineControl);
-				}, 3000);
-			}
-
-			// Auto-sync after a short delay
-			setTimeout(() => {
-				processSyncQueue();
-			}, 1000);
-		});
-
-		window.addEventListener('offline', () => {
-			console.log('🔴 Connection lost - switching to offline mode');
-			isOnline = false;
-			updateConnectionStatus();
-
-			// Add offline banner dynamically if map exists and banner doesn't exist
-			if (map && !window.offlineMessageControl) {
-				const offlineControl = L.control({ position: 'bottomleft' });
-				offlineControl.onAdd = function () {
-					const div = L.DomUtil.create('div', 'offline-message');
-					div.innerHTML = `<div style="background: rgba(255,193,7,0.95); padding: 10px 15px; border-radius: 6px; font-size: 13px; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid #ff9800; animation: fadeIn 0.3s;">
-						<strong>📴 MODO OFFLINE</strong><br>
-						<small>✓ Usando tiles em cache<br>✓ Pode navegar e marcar atividades<br>✓ Sincronizará ao voltar online</small>
-					</div>`;
-					return div;
-				};
-				offlineControl.addTo(map);
-				window.offlineMessageControl = offlineControl;
-			}
-
-			// Optional alert (can be removed if you don't want it)
-			// alert('⚠️ Modo Offline Ativado\n\nSuas alterações serão salvas localmente e sincronizadas quando a internet voltar.');
-		});
-
-		// Initialize offline system
-		loadSyncQueue();
-		updateConnectionStatus();
-
-		// --- 0. AUTHENTICATION LOGIC ---
-
-		function performLogin() {
-			const email = document.getElementById('loginEmail').value;
-			const pass = document.getElementById('loginPass').value;
-			const errorMsg = document.getElementById('loginError');
-
-			errorMsg.style.display = 'none';
-
-			if (!auth) {
-				alert("Erro: Firebase não configurado! Entre como Admin primeiro se possível ou configure o código.");
-				return;
-			}
-
-			auth.signInWithEmailAndPassword(email, pass)
-				.then((userCredential) => {
-					// Logged in
-					document.getElementById('loginModal').style.display = 'none';
-					currentUser = userCredential.user;
-					console.log("User logged in:", currentUser.email);
-					checkAdminRole(currentUser.email);
-				})
-				.catch((error) => {
-					errorMsg.textContent = "Erro: " + error.message;
-					errorMsg.style.display = 'block';
-				});
-		}
-
-		function performLogout() {
-			auth.signOut().then(() => {
-				location.reload();
-			});
-		}
-
-		function checkAdminRole(email) {
-			// For simplicity in this standalone file, we'll check against a hardcoded list OR the 'users' collection
-			// Here, we enable the "Users" button if they are authenticated. 
-			// Real role checks would read from Firestore 'users/{uid}'
-
-			// Allow User Management button visibility
-			// We assume if they have the legacy password, they are Super Admins, but let's just show it.
-			// Or better: Check if the user exists in our 'users' collection with role 'admin'
-			if (db) {
-				db.collection('users').where('email', '==', email).get().then(snap => {
-					if (!snap.empty && snap.docs[0].data().role === 'admin') {
-						// is Cloud Admin
-					}
-				});
-			}
-		}
-
-		// --- 1. PERSISTENCE & CONFIG ---
-		const defaultFirebaseConfig = {
-			apiKey: "AIzaSyBj_HAse0IgJp2LiADdQkQ6DKvKemstljc",
-			authDomain: "mapag2-901fe.firebaseapp.com",
-			projectId: "mapag2-901fe",
-			storageBucket: "mapag2-901fe.firebasestorage.app",
-			messagingSenderId: "503519999904",
-			appId: "1:503519999904:web:4c2de0ff2000cf73b456c5"
-		};
-
-		const firebaseConfig = JSON.parse(localStorage.getItem('firebaseConfig')) || defaultFirebaseConfig;
-
-		if (firebaseConfig) {
-			initFirebase(firebaseConfig);
-		}
-
-		// ==== CLOUD KML STORAGE FUNCTIONS ====
-
-		function uploadKMLToCloud(kmlContent, fileName) {
-			return new Promise((resolve, reject) => {
-				if (!db) {
-					reject(new Error('Firestore not initialized'));
-					return;
-				}
-
-				const kmlData = {
-					fileName: fileName || 'map.kml',
-					fileContent: kmlContent,
-					uploadedBy: currentUser?.email || 'unknown',
-					uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-					version: Date.now() // Use timestamp as version
-				};
-
-				db.collection('system_config')
-					.doc('kml_data')
-					.set(kmlData)
-					.then(() => resolve())
-					.catch(err => reject(err));
-			});
-		}
-
-		function fetchKMLFromCloud() {
-			return new Promise((resolve, reject) => {
-				if (!db) {
-					reject(new Error('Firestore not initialized'));
-					return;
-				}
-
-				db.collection('system_config')
-					.doc('kml_data')
-					.get()
-					.then(doc => {
-						if (doc.exists) {
-							const data = doc.data();
-							resolve(data.fileContent);
-						} else {
-							reject(new Error('No KML found in cloud'));
-						}
-					})
-					.catch(err => reject(err));
-			});
-		}
-
-		// Auto-load Map (Cloud first, then local cache)
-		function autoLoadMap() {
-			console.log('🔄 Auto-loading map...');
-
-			// Try cloud first
-			if (db) {
-				fetchKMLFromCloud()
-					.then(kmlContent => {
-						console.log('✅ Loaded KML from cloud');
-						// Cache it locally
-						localforage.setItem('kmlFile', kmlContent);
-						initMap(kmlContent);
-						// Hide file selector for users
-						if (!isAdmin) {
-							loader.style.display = 'none';
-						}
-					})
-					.catch(cloudErr => {
-						console.log('⚠️ Cloud KML not available:', cloudErr.message);
-						// Fallback to local cache
-						localforage.getItem('kmlFile').then(function (value) {
-							if (value) {
-								console.log("✅ Loading cached KML from local storage");
-								initMap(value);
-							} else {
-								console.log('📄 No map data found. Showing file selector.');
-								// Only show file selector if admin
-								if (!isAdmin && !currentUser) {
-									loader.querySelector('.container p').textContent = 'Aguardando administrador carregar o mapa...';
-									loader.querySelector('.btn').style.display = 'none';
-								}
-							}
-						});
-					});
-			} else {
-				// DB not ready, use local cache
-				localforage.getItem('kmlFile').then(function (value) {
-					if (value) {
-						console.log("✅ Loading cached KML (offline mode)");
-						initMap(value);
-					}
-				});
-			}
-		}
-
-		// Call autoLoadMap after a short delay to let DB initialize
-		setTimeout(() => {
-			autoLoadMap();
-		}, 1000);
-
-		// Toggle Admin Logic - Sistema de Perfis
-		adminToggle.addEventListener('change', (e) => {
-			if (e.target.checked) {
-				const password = prompt("Digite a senha de administrador:");
-				// Perfil ADMIN COMPLETO - Senha: 789512
-				if (password === "789512") {
-					isAdmin = true;
-					userProfile = 'admin';
-					btnConfig.style.display = 'inline-block';
-					btnUsers.style.display = 'inline-block'; // Show user management
-					btnExport.style.display = 'inline-block';
-					btnActivities.style.display = 'inline-block';
-					btnChart.style.display = 'inline-block';
-					btnUploadKML.style.display = 'inline-block'; // Show KML upload
-					alert("Modo Admin Completo ativado! ✅\n\nAcesso total ao sistema.");
-				}
-				// Perfil INFRACMPC - Senha: infracmpc - Apenas Gráfico e Exportação
-				else if (password === "infracmpc") {
-					isAdmin = false; // Não é admin completo
-					userProfile = 'infracmpc';
-					btnConfig.style.display = 'none';
-					btnUsers.style.display = 'none';
-					btnExport.style.display = 'inline-block'; // ✅ PERMITE EXPORTAR
-					btnActivities.style.display = 'none';
-					btnChart.style.display = 'inline-block'; // ✅ PERMITE VER GRÁFICO
-					btnUploadKML.style.display = 'none';
-					alert("Perfil INFRACMPC ativado! ✅\n\nVocê pode:\n• Ver gráficos\n• Exportar dados");
-				}
-				// Senha incorreta
-				else {
-					e.target.checked = false;
-					isAdmin = false;
-					userProfile = null;
-					btnConfig.style.display = 'none';
-					btnUsers.style.display = 'none';
-					btnExport.style.display = 'none';
-					btnActivities.style.display = 'none';
-					btnChart.style.display = 'none';
-					btnUploadKML.style.display = 'none';
-					alert("Senha incorreta! ❌");
-				}
-			} else {
-				isAdmin = false;
-				userProfile = null;
-				btnConfig.style.display = 'none';
-				btnUsers.style.display = 'none';
-				btnExport.style.display = 'none';
-				btnActivities.style.display = 'none';
-				btnChart.style.display = 'none';
-				btnUploadKML.style.display = 'none'; // Hide KML upload
-			}
-			map.closePopup();
-		});
-
-		// Config Modal
-		btnConfig.addEventListener('click', () => {
-			document.getElementById('configModal').style.display = 'flex';
-			if (firebaseConfig) {
-				document.getElementById('apiKeyInput').value = firebaseConfig.apiKey;
-				document.getElementById('projectIdInput').value = firebaseConfig.projectId;
-			}
-		});
-
-		// Users Modal
-		btnUsers.addEventListener('click', () => {
-			document.getElementById('usersModal').style.display = 'flex';
-			loadUsersList();
-		});
-
-		// Activities Modal - New approach: Select group first, then activities
-		let selectedGroupName = null;
-
-		// === ACTIVITY CRUD FUNCTIONS ===
-
-		function createNewActivity() {
-			const name = document.getElementById('newActivityNameInput').value.trim();
-			if (!name) {
-				alert('Digite um nome para a atividade!');
-				return;
-			}
-
-			if (db) {
-				db.collection('activity_types').add({
-					name: name,
-					assignedGroups: [], // Start with no groups assigned
-					createdAt: firebase.firestore.FieldValue.serverTimestamp()
-				}).then(() => {
-					document.getElementById('newActivityNameInput').value = '';
-					alert(`✅ Atividade "${name}" criada com sucesso!`);
-					// Activities list will update via snapshot listener
-				}).catch(err => {
-					alert('Erro ao criar atividade: ' + err.message);
-				});
-			} else {
-				// Local mode
-				const newActivity = {
-					id: Date.now().toString(),
-					name: name,
-					assignedGroups: []
-				};
-				activityTypesCache.push(newActivity);
-				localStorage.setItem('localActivityTypes', JSON.stringify(activityTypesCache));
-				renderActivitiesListCRUD();
-				document.getElementById('newActivityNameInput').value = '';
-				alert(`✅ Atividade "${name}" criada!`);
-			}
-		}
-
-		function renderActivitiesListCRUD() {
-			const container = document.getElementById('activitiesListCRUD');
-
-			if (activityTypesCache.length === 0) {
-				container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Nenhuma atividade cadastrada.<br><small>Use o campo acima para criar.</small></p>';
-				return;
-			}
-
-			let html = '';
-			activityTypesCache.sort((a, b) => a.name.localeCompare(b.name)).forEach(activity => {
-				const groupCount = activity.assignedGroups ? activity.assignedGroups.length : 0;
-				const groupsText = groupCount > 0 ? `${groupCount} grupo(s)` : 'Sem grupos';
-
-				html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;">
-				<div style="flex: 1;">
-					<strong>${activity.name}</strong><br>
-					<small style="color: #666;">🏢 ${groupsText}</small>
-				</div>
-				<div>
-					<button onclick="editActivity('${activity.id}')" style="background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px;">✏️</button>
-					<button onclick="deleteActivity('${activity.id}')" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">🗑️</button>
-				</div>
-			</div>`;
-			});
-
-			container.innerHTML = html;
-		}
-
-		function editActivity(id) {
-			const activity = activityTypesCache.find(a => a.id === id);
-			if (!activity) return;
-
-			const newName = prompt('Editar nome da atividade:', activity.name);
-			if (!newName || newName.trim() === '') return;
-
-			const trimmedName = newName.trim();
-
-			if (db) {
-				db.collection('activity_types').doc(id).update({
-					name: trimmedName
-				}).then(() => {
-					alert(`✅ Atividade atualizada para "${trimmedName}"!`);
-				}).catch(err => {
-					alert('Erro ao atualizar: ' + err.message);
-				});
-			} else {
-				const index = activityTypesCache.findIndex(a => a.id === id);
-				if (index !== -1) {
-					activityTypesCache[index].name = trimmedName;
-					localStorage.setItem('localActivityTypes', JSON.stringify(activityTypesCache));
-					renderActivitiesListCRUD();
-					alert(`✅ Atividade atualizada!`);
-				}
-			}
-		}
-
-		function deleteActivity(id) {
-			const activity = activityTypesCache.find(a => a.id === id);
-			if (!activity) return;
-
-			if (!confirm(`Tem certeza que deseja excluir "${activity.name}" ?\n\nIsso removerá a atividade de todos os grupos.`)) {
-				return;
-			}
-
-			if (db) {
-				db.collection('activity_types').doc(id).delete().then(() => {
-					alert('✅ Atividade excluída!');
-				}).catch(err => {
-					alert('Erro ao excluir: ' + err.message);
-				});
-			} else {
-				const index = activityTypesCache.findIndex(a => a.id === id);
-				if (index !== -1) {
-					activityTypesCache.splice(index, 1);
-					localStorage.setItem('localActivityTypes', JSON.stringify(activityTypesCache));
-					renderActivitiesListCRUD();
-					alert('✅ Atividade excluída!');
-				}
-			}
-		}
-
-		btnActivities.addEventListener('click', () => {
-			document.getElementById('activitiesModal').style.display = 'flex';
-			renderActivitiesListCRUD(); // Render CRUD list
-			populateGroupsListForSelection();
-		});
-
-		function populateGroupsListForSelection() {
-			const container = document.getElementById('groupsListForSelection');
-			if (!window.overlayMaps) {
-				container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Carregue o mapa primeiro</p>';
-				return;
-			}
-
-			let html = '';
-			const groupNames = Object.keys(window.overlayMaps).sort();
-
-			groupNames.forEach(groupName => {
-				html += `<div onclick="selectGroup('${groupName}')" id="group_${groupName.replace(/\s+/g, '_')}"
-			style="padding: 12px; margin-bottom: 5px; cursor: pointer; border-radius: 4px; border: 2px solid #ddd; background: white;">
-				<strong>${groupName}</strong>
-			</div>`;
-			});
-
-			container.innerHTML = html;
-		}
-
-		function selectGroup(groupName) {
-			selectedGroupName = groupName;
-
-			// Highlight selected group
-			document.querySelectorAll('#groupsListForSelection > div').forEach(div => {
-				div.style.background = 'white';
-				div.style.borderColor = '#ddd';
-			});
-
-			const selectedDiv = document.getElementById('group_' + groupName.replace(/\s+/g, '_'));
-			if (selectedDiv) {
-				selectedDiv.style.background = '#e8f5e9';
-				selectedDiv.style.borderColor = '#4CAF50';
-			}
-
-			// Load activities for this group
-			populateActivitiesForGroup(groupName);
-
-			// Enable save button
-			document.getElementById('saveGroupActivitiesBtn').disabled = false;
-		}
-
-		function populateActivitiesForGroup(groupName) {
-			const container = document.getElementById('activitiesListForSelection');
-
-			if (activityTypesCache.length === 0) {
-				container.innerHTML = '<p style="text-align: center; color: #999;">Nenhuma atividade cadastrada ainda.<br><small>Use o firestore para criar atividades</small></p>';
-				return;
-			}
-
-			let html = '<div style="margin-bottom: 10px;"><small style="color: #666;">Marque as atividades disponíveis para <strong>' + groupName + '</strong>:</small></div>';
-
-			activityTypesCache.sort((a, b) => a.name.localeCompare(b.name)).forEach(activity => {
-				const isAssigned = activity.assignedGroups && activity.assignedGroups.includes(groupName);
-				html += `<label style="display: block; padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;">
-				<input type="checkbox" value="${activity.id}" ${isAssigned ? 'checked' : ''} style="margin-right: 8px;">
-					${activity.name}
-				</label>`;
-			});
-
-			container.innerHTML = html;
-		}
-
-		function saveGroupActivities() {
-			if (!selectedGroupName) {
-				alert('Selecione um grupo primeiro!');
-				return;
-			}
-
-			// Get checked activities
-			const checkedBoxes = document.querySelectorAll('#activitiesListForSelection input[type="checkbox"]:checked');
-			const selectedActivityIds = Array.from(checkedBoxes).map(cb => cb.value);
-
-			// Update each activity's assignedGroups
-			activityTypesCache.forEach(activity => {
-				if (!activity.assignedGroups) activity.assignedGroups = [];
-
-				// Remove this group from activity if not selected
-				const index = activity.assignedGroups.indexOf(selectedGroupName);
-				if (selectedActivityIds.includes(activity.id)) {
-					// Add group if not already there
-					if (index === -1) {
-						activity.assignedGroups.push(selectedGroupName);
-					}
-				} else {
-					// Remove group if it's there
-					if (index !== -1) {
-						activity.assignedGroups.splice(index, 1);
-					}
-				}
-			});
-
-			// Save to firestore or local
-			if (db) {
-				const promises = activityTypesCache.map(activity => {
-					return db.collection('activity_types').doc(activity.id).update({
-						assignedGroups: activity.assignedGroups
-					});
-				});
-
-				Promise.all(promises)
-					.then(() => {
-						alert(`✅ Atividades salvas para ${selectedGroupName} !`);
-					})
-					.catch(err => {
-						alert('Erro ao salvar: ' + err.message);
-					});
-			} else {
-				localStorage.setItem('localActivityTypes', JSON.stringify(activityTypesCache));
-				alert(`✅ Atividades salvas para ${selectedGroupName} !`);
-			}
-		}
-		function saveConfig() {
-			const apiKey = document.getElementById('apiKeyInput').value.trim();
-			const projectId = document.getElementById('projectIdInput').value.trim();
-
-			if (!apiKey || !projectId) return alert("Preencha ambos os campos!");
-
-			const config = { apiKey, projectId, authDomain: `${projectId}.firebaseapp.com`, projectId };
-			localStorage.setItem('firebaseConfig', JSON.stringify(config));
-
-			initFirebase(config);
-			document.getElementById('configModal').style.display = 'none';
-			alert("Configuração salva! Recarregando página...");
-			location.reload();
-		}
-
-		// --- KML UPLOAD FUNCTIONS ---
-		const btnUploadKML = document.getElementById('btnUploadKML');
-		const kmlFileInput = document.getElementById('kmlFileInput');
-
-		btnUploadKML.addEventListener('click', () => {
-			document.getElementById('kmlUploadModal').style.display = 'flex';
-		});
-
-		// File input change listener
-		kmlFileInput.addEventListener('change', (e) => {
-			const file = e.target.files[0];
-			const preview = document.getElementById('kmlFilePreview');
-			const fileName = document.getElementById('kmlFileName');
-			const confirmBtn = document.getElementById('btnConfirmKMLUpload');
-
-			if (file) {
-				fileName.textContent = file.name;
-				preview.style.display = 'block';
-				confirmBtn.disabled = false;
-			} else {
-				preview.style.display = 'none';
-				confirmBtn.disabled = true;
-			}
-		});
-
-		function closeKMLUploadModal() {
-			document.getElementById('kmlUploadModal').style.display = 'none';
-			// Reset form
-			document.getElementById('kmlFileInput').value = '';
-			document.getElementById('kmlFilePreview').style.display = 'none';
-			document.getElementById('kmlUploadStatus').style.display = 'none';
-			document.getElementById('btnConfirmKMLUpload').disabled = true;
-		}
-
-		function handleKMLUpload() {
-			const fileInput = document.getElementById('kmlFileInput');
-			const file = fileInput.files[0];
-			const statusDiv = document.getElementById('kmlUploadStatus');
-
-			if (!file) {
-				alert('Por favor, selecione um arquivo .kml');
-				return;
-			}
-
-			if (!file.name.endsWith('.kml')) {
-				alert('Por favor, selecione um arquivo .kml válido');
-				return;
-			}
-
-			// Show loading status
-			statusDiv.innerHTML = '<strong style="color: #2196F3;">📤 Fazendo upload...</strong>';
-			statusDiv.style.display = 'block';
-			statusDiv.style.background = '#E3F2FD';
-
-			// Read file
-			const reader = new FileReader();
-			reader.onload = function (e) {
-				const kmlContent = e.target.result;
-
-				// Upload to cloud
-				uploadKMLToCloud(kmlContent, file.name)
-					.then(() => {
-						statusDiv.innerHTML = '<strong style="color: #4CAF50;">✅ Upload concluído com sucesso!</strong><br><small>O mapa será atualizado automaticamente.</small>';
-						statusDiv.style.background = '#E8F5E9';
-
-						// Cache locally
-						localforage.setItem('kmlFile', kmlContent);
-
-						// Reload map if it exists
-						if (typeof map !== 'undefined' && map) {
-							// Reinitialize map with new KML
-							setTimeout(() => {
-								closeKMLUploadModal();
-								alert('✅ Mapa atualizado! Recarregando página...');
-								location.reload();
-							}, 1500);
-						} else {
-							// No map yet, just close modal
-							setTimeout(() => {
-								closeKMLUploadModal();
-								alert('✅ Upload concluído! Carregue o mapa para visualizar.');
-							}, 1500);
-						}
-					})
-					.catch(error => {
-						statusDiv.innerHTML = `<strong style="color: #f44336;">❌ Erro no upload:</strong><br><small>${error.message}</small>`;
-						statusDiv.style.background = '#FFEBEE';
-						console.error('Upload error:', error);
-					});
-			};
-
-			reader.onerror = function () {
-				statusDiv.innerHTML = '<strong style="color: #f44336;">❌ Erro ao ler o arquivo</strong>';
-				statusDiv.style.background = '#FFEBEE';
-			};
-
-			reader.readAsText(file);
-		}
-
-		// --- ICONS ---
-		const greenIcon = new L.Icon({
-			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-			shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-			iconSize: [25, 41],
-			iconAnchor: [12, 41],
-			popupAnchor: [1, -34],
-			shadowSize: [41, 41]
-		});
-
-		const redIcon = new L.Icon({
-			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-			shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-			iconSize: [25, 41],
-			iconAnchor: [12, 41],
-			popupAnchor: [1, -34],
-			shadowSize: [41, 41]
-		});
-
-		const orangeIcon = new L.Icon({
-			iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
-			shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-			iconSize: [25, 41],
-			iconAnchor: [12, 41],
-			popupAnchor: [1, -34],
-			shadowSize: [41, 41]
-		});
-
-		let markersMap = {}; // Key: sanitized_name -> Marker Object
-
-		// --- TIME SLOT HELPERS ---
-		function getCurrentSlotTime() {
-			const now = new Date();
-			const minutes = now.getMinutes();
-			let hour = now.getHours();
-
-			// If it is minute 59, we are looking at the NEXT hour
-			if (minutes >= 59) {
-				hour = (hour + 1) % 24;
-			}
-			return hour.toString().padStart(2, '0') + ':00';
-		}
-
-		function getVisualStatus(data) {
-			if (!data) return 'pending';
-
-			// Special 'new' status override if just saved? No, rely on history.
-
-			const slot = getCurrentSlotTime();
-			const history = data.history || [];
-
-			// Check if we have a check-in for this specific slot
-			const hasEntry = history.some(h => h.checkinTime === slot);
-
-			return hasEntry ? 'done' : 'pending';
-		}
-
-		function updateMarkerIcon(name, _ignoredStatus) {
-			const key = sanitizeName(name);
-			const marker = markersMap[key];
-			if (marker) {
-				const data = getActivityData(name);
-				const currentStatus = getVisualStatus(data);
-
-				if (currentStatus === 'done') {
-					marker.setIcon(greenIcon);
-				} else {
-					marker.setIcon(redIcon);
-				}
-			}
-		}
-
-		// Auto-Refresh Loop (Every 20 seconds)
-		setInterval(() => {
-			// We need to iterate over all markers to update them
-			// markersMap keys are sanitized names. We need the real name to call updateMarkerIcon?
-			// Actually updateMarkerIcon sanitizes the input name.
-			// So if we pass the sanitized name, it will be sanitized again (idempotent usually).
-			// Let's verify sanitizeName logic.
-			// sanitizeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-			// If we pass alrady sanitized string, it stays same.
-			// However, getActivityData(name) might depend on original name if it uses local storage key?
-			// getActivityData uses sanitizeName internally.
-			// So passing sanitized key is fine for data retrieval.
-			// BUT updateMarkerIcon uses markersMap[key].
-
-			// Better iterate over allPlacemarksData which has original names.
-			if (typeof allPlacemarksData !== 'undefined') {
-				allPlacemarksData.forEach(p => {
-					updateMarkerIcon(p.name);
-				});
-			}
-		}, 20000);
-
-		function initFirebase(config) {
-			try {
-				if (!firebase.apps.length) {
-					firebase.initializeApp(config);
-					db = firebase.firestore();
-					auth = firebase.auth();
-					console.log("Firebase Connected");
-
-					// Listen for Auth State
-					auth.onAuthStateChanged((user) => {
-						if (user) {
-							// User is signed in.
-							document.getElementById('loginModal').style.display = 'none';
-							currentUser = user;
-						} else {
-							// No user is signed in.
-							document.getElementById('loginModal').style.display = 'flex';
-						}
-					});
-
-					// Realtime Listener for Activities
-					db.collection("activities").onSnapshot((snapshot) => {
-						snapshot.docChanges().forEach((change) => {
-							const data = change.doc.data();
-							activitiesCache[change.doc.id] = data; // Store full object now
-
-							// Update Icon Realtime
-							if (data.lat && data.lng) {
-								updateMarkerIcon(data.lat, data.lng, data.status);
-							}
-						});
-						// Update stats after data changes
-						updateStats();
-					});
-
-					// Listener for Activity Types
-					db.collection("activity_types").orderBy("name").onSnapshot((snapshot) => {
-						activityTypesCache = [];
-						snapshot.forEach((doc) => {
-							activityTypesCache.push({ id: doc.id, ...doc.data() });
-						});
-						renderActivityTypesList(); // Refresh list if open
-					});
-				}
-			} catch (e) {
-				console.error("Firebase Error:", e);
-				alert("Erro ao conectar no Firebase.");
-			}
-		}
-
-		// --- USER MANAGEMENT LOGIC (Secondary App) ---
-		function createNewUser() {
-			const email = document.getElementById('newEmail').value;
-			const pass = document.getElementById('newPass').value;
-
-			if (!email || !pass) return alert("Preencha e-mail e senha.");
-
-			// Create a secondary app to avoid logging out the current admin
-			const secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary");
-
-			secondaryApp.auth().createUserWithEmailAndPassword(email, pass)
-				.then((userCredential) => {
-					// Created! Now save reference to Firestore so we can list it
-					db.collection('users').doc(userCredential.user.uid).set({
-						email: email,
-						role: 'user',
-						createdAt: firebase.firestore.FieldValue.serverTimestamp()
-					}).then(() => {
-						alert(`Usuário ${email} criado com sucesso!`);
-						secondaryApp.delete(); // Cleanup
-						loadUsersList(); // Refresh list
-						document.getElementById('newEmail').value = "";
-						document.getElementById('newPass').value = "";
-					});
-				})
-				.catch((error) => {
-					alert("Erro ao criar: " + error.message);
-					secondaryApp.delete();
-				});
-		}
-
-		function loadUsersList() {
-			const listDiv = document.getElementById('usersList');
-			listDiv.innerHTML = "Carregando...";
-
-			db.collection('users').get().then((querySnapshot) => {
-				listDiv.innerHTML = "";
-				if (querySnapshot.empty) {
-					listDiv.innerHTML = "Nenhum usuário encontrado.";
-					return;
-				}
-
-				querySnapshot.forEach((doc) => {
-					const u = doc.data();
-					const div = document.createElement('div');
-					div.style.padding = "5px";
-					div.style.borderBottom = "1px solid #eee";
-					div.innerHTML = `Running <b>${u.email}</b> (${u.role || 'user'})`;
-					listDiv.appendChild(div);
-				});
-			});
-		}
-
-		// --- ACTIVITIES TYPES CRUD ---
-		let editingActivityId = null; // Track if we're editing
-
-		function addActivityType() {
-			const name = document.getElementById('newActivityName').value.trim();
-			if (!name) return alert("Digite um nome!");
-
-			// Get selected groups
-			const groupCheckboxes = document.querySelectorAll('#groupCheckboxes input[type="checkbox"]:checked');
-			const selectedGroups = Array.from(groupCheckboxes).map(cb => cb.value);
-
-			if (selectedGroups.length === 0) {
-				return alert("Selecione pelo menos um grupo/empresa para esta atividade!");
-			}
-
-			if (editingActivityId) {
-				// UPDATE existing activity
-				if (db) {
-					db.collection("activity_types").doc(editingActivityId).update({
-						name: name,
-						assignedGroups: selectedGroups
-					}).then(() => {
-						clearActivityForm();
-						alert("Atividade atualizada!");
-					}).catch(err => alert("Erro ao atualizar: " + err.message));
-				} else {
-					// Update in local cache
-					const index = activityTypesCache.findIndex(a => a.id === editingActivityId);
-					if (index !== -1) {
-						activityTypesCache[index] = {
-							id: editingActivityId,
-							name: name,
-							assignedGroups: selectedGroups
-						};
-						localStorage.setItem('localActivityTypes', JSON.stringify(activityTypesCache));
-						renderActivityTypesList();
-						clearActivityForm();
-					}
-				}
-			} else {
-				// ADD new activity
-				if (db) {
-					db.collection("activity_types").add({
-						name: name,
-						assignedGroups: selectedGroups,
-						createdAt: firebase.firestore.FieldValue.serverTimestamp()
-					}).then(() => {
-						clearActivityForm();
-					}).catch(err => alert("Erro ao salvar: " + err.message));
-				} else {
-					// Local fallback
-					activityTypesCache.push({
-						id: Date.now().toString(),
-						name: name,
-						assignedGroups: selectedGroups
-					});
-					localStorage.setItem('localActivityTypes', JSON.stringify(activityTypesCache));
-					renderActivityTypesList();
-					clearActivityForm();
-				}
-			}
-		}
-
-		function clearActivityForm() {
-			document.getElementById('newActivityName').value = "";
-			document.querySelectorAll('#groupCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
-			editingActivityId = null;
-			// Change button text back
-			const btn = document.querySelector('#activitiesModal button[onclick="addActivityType()"]');
-			if (btn) btn.textContent = "Adicionar";
-		}
-
-		function editActivityType(id) {
-			const activity = activityTypesCache.find(a => a.id === id);
-			if (!activity) return;
-
-			// Populate form
-			document.getElementById('newActivityName').value = activity.name;
-
-			// Check the assigned groups
-			document.querySelectorAll('#groupCheckboxes input[type="checkbox"]').forEach(cb => {
-				cb.checked = activity.assignedGroups && activity.assignedGroups.includes(cb.value);
-			});
-
-			editingActivityId = id;
-
-			// Change button text
-			const btn = document.querySelector('#activitiesModal button[onclick="addActivityType()"]');
-			if (btn) btn.textContent = "Atualizar";
-		}
-		function deleteActivityType(id) {
-			if (confirm("Tem certeza que deseja excluir?")) {
-				if (db) {
-					db.collection("activity_types").doc(id).delete();
-				} else {
-					activityTypesCache = activityTypesCache.filter(a => a.id !== id);
-					localStorage.setItem('localActivityTypes', JSON.stringify(activityTypesCache));
-					renderActivityTypesList();
-				}
-			}
-		}
-
-		function renderActivityTypesList() {
-			const listDiv = document.getElementById('activityTypesList');
-			listDiv.innerHTML = "";
-
-			if (!db) {
-				// Load from local if no DB
-				const local = localStorage.getItem('localActivityTypes');
-				if (local) activityTypesCache = JSON.parse(local);
-			}
-
-			if (activityTypesCache.length === 0) {
-				listDiv.innerHTML = "<p style='text-align:center; color:#777;'>Nenhum tipo cadastrado.</p>";
-				return;
-			}
-
-			activityTypesCache.sort((a, b) => a.name.localeCompare(b.name)).forEach(act => {
-				const div = document.createElement('div');
-				div.style.padding = "8px";
-				div.style.borderBottom = "1px solid #eee";
-				div.style.display = "flex";
-				div.style.justifyContent = "space-between";
-				div.style.alignItems = "center";
-
-				// Show activity name and groups
-				const groupsText = act.assignedGroups && act.assignedGroups.length > 0
-					? `< small style = "color: #666;" >🏢 ${act.assignedGroups.join(', ')}</small > `
-					: `< small style = "color: #999;" > Sem grupos</small > `;
-
-				div.innerHTML = `
-			< div style = "flex: 1; cursor: pointer;" onclick = "editActivityType('${act.id}')" >
-				<div style="font-weight: bold;">${act.name}</div>
-				<div>${groupsText}</div>
-			</div >
-			<button onclick="deleteActivityType('${act.id}')" style="background:none; border:none; color:red; cursor:pointer; padding: 5px;">🗑️</button>
-		`;
-
-				listDiv.appendChild(div);
-			});
-		}
-
-		// --- EXPORT LOGIC ---
-		btnExport.addEventListener('click', () => {
-			if (!allPlacemarksData.length) {
-				alert("O mapa ainda não carregou os pontos ou está vazio.");
-				return;
-			}
-
-			let csvContent = "data:text/csv;charset=utf-8,";
-			// BOM for Excel to read UTF-8 correctly
-			csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-			csvContent += "Nome do Local;Latitude;Longitude;Status;Atividade (Descrição);Realizado Por;Data/Hora Conclusão;Recado Técnico\n";
-
-			allPlacemarksData.forEach(item => {
-				const lat = item.lat;
-				const lng = item.lng;
-				const name = item.name.replace(/;/g, ","); // Sanitize for CSV
-
-				const data = getActivityData(item.name); // Using name instead of coordinates
-
-				let status = "Pendente";
-				let activity = "";
-				let user = "";
-				let date = "";
-				let note = "";
-
-				if (data) {
-					// Data might be string (legacy) or object
-					if (typeof data === 'string') {
-						activity = data.replace(/;/g, ",");
-					} else {
-						// NEW LOGIC: Combine selected activities + manual text
-						const selected = (data.selectedActivities || []).join(", ");
-						const manual = (data.text || "");
-						activity = [selected, manual].filter(Boolean).join(" | ").replace(/;/g, ",");
-
-						if (data.status === 'done') {
-							status = "Concluído";
-							user = data.completedBy || "";
-							date = data.completedAt ? new Date(data.completedAt.seconds * 1000).toLocaleString() : "";
-							note = (data.userNote || "").replace(/;/g, ",");
-						}
-					}
-				}
-
-				// CSV Row
-				csvContent += `${name};${lat};${lng};${status};${activity};${user};${date};${note} \n`;
-			});
-
-			const encodedUri = encodeURI(csvContent);
-			const link = document.createElement("a");
-			link.setAttribute("href", encodedUri);
-			link.setAttribute("download", "relatorio_mapa.csv");
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-		});
-
-		// --- 2. DATA LOGIC ---
-		// --- 2. DATA LOGIC ---
-
-		// Sanitize name to create a valid key
-		function sanitizeName(name) {
-			return 'activity_' + name
-				.toLowerCase()
-				.normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents
-				.replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric with underscore
-				.replace(/^_+|_+$/g, ''); // Remove leading/trailing underscores
-		}
-
-		// Unified helper to get Activity Data (Object) - NOW USING NAME
-		function getActivityData(name) {
-			const key = sanitizeName(name);
-
-			// 1. Try Memory Cache
-			if (activitiesCache[key]) {
-				return activitiesCache[key];
-			}
-
-			// 2. Try LocalStorage
-			const local = localStorage.getItem(key);
-			if (local) {
-				try {
-					// Check if it's JSON (Old text-only might be just string?)
-					// Our new saves are JSON. Old legacy were plain text.
-					// Simple heuristic: starts with {
-					if (local.trim().startsWith('{')) {
-						const parsed = JSON.parse(local);
-						activitiesCache[key] = parsed; // Populate cache
-						return parsed;
-					} else {
-						// Legacy string format
-						return { text: local, status: 'pending' };
-					}
-				} catch (e) {
-					// Fallback
-					return { text: local, status: 'pending' };
-				}
-			}
-
-			return null;
-		}
-
-		// Deprecated alias for compatibility if referenced elsewhere
-		function getActivity(lat, lng) {
-			// Legacy support - not recommended
-			console.warn('getActivity(lat, lng) is deprecated. Use getActivityData(name) instead.');
-			return null;
-		}
-
-		function saveActivity(name, lat, lng) {
-			const key = sanitizeName(name);
-
-			// Get manual text
-			const text = document.getElementById('activityInput').value;
-
-			// Get checked boxes
-			const checkboxes = document.querySelectorAll('.activity-checkbox:checked');
-			const selectedActivities = Array.from(checkboxes).map(cb => cb.value);
-
-			const payload = {
-				name: name, // Store name for reference
-				text: text,
-				selectedActivities: selectedActivities,
-				lat: lat,
-				lng: lng,
-				updatedAt: isOnline && db ? firebase.firestore.FieldValue.serverTimestamp() : new Date()
-			};
-
-			// Read existing data to preserve status
-			const existing = activitiesCache[key] || {};
-			if (existing.status === 'done' || existing.status === 'partial') {
-				payload.status = existing.status;
-				payload.completedBy = existing.completedBy;
-				payload.completedAt = existing.completedAt;
-				payload.userNote = existing.userNote;
-				payload.completedItems = existing.completedItems;
-			}
-
-			// Update cache immediately (optimistic update)
-			activitiesCache[key] = payload;
-			updateMarkerIcon(name, payload.status);
-
-			// Save to LocalStorage (always, for offline support)
-			localStorage.setItem(key, JSON.stringify(payload));
-
-			if (typeof updateStats === "function") updateStats();
-
-			// Try to save to cloud
-			if (db && isOnline) {
-				db.collection("activities").doc(key).set(payload, { merge: true }).then(() => {
-					map.closePopup();
-				}).catch(err => {
-					console.error(err);
-					// Add to offline queue
-					addToSyncQueue({
-						type: 'saveActivity',
-						key: key,
-						data: payload
-					});
-					alert("⚠️ Salvo localmente. Será sincronizado quando a internet voltar.");
-					map.closePopup();
-				});
-			} else {
-				// Offline mode - add to queue
-				addToSyncQueue({
-					type: 'saveActivity',
-					key: key,
-					data: payload
-				});
-				alert("💾 Salvo offline! Será sincronizado automaticamente.");
-				map.closePopup();
-			}
-		}
-
-		// --- 2. DATA LOGIC ---
-
-		async function concludeActivity(name, lat, lng, note) {
-			if (!currentUser) return alert("Você precisa estar logado!");
-
-			// VALIDATION: Check-in Time
-			const timeInput = document.getElementById('checkinTimeInput');
-			let checkinTime = null;
-			if (timeInput) {
-				checkinTime = timeInput.value;
-				if (!checkinTime) {
-					alert("⚠️ Por favor, selecione o horário do check-in antes de salvar!");
-					return; // STOP
-				}
-			}
-
-			const key = sanitizeName(name);
-			const userNote = note || "";
-
-			// Collect checked items
-			const checkboxes = document.querySelectorAll('.user-check:checked');
-			const completedItems = Array.from(checkboxes).map(cb => cb.value);
-
-			// VALIDATION: Must select at least one item
-			if (completedItems.length === 0) {
-				alert("⚠️ Por favor, marque pelo menos uma atividade realizada antes de salvar!");
-				return;
-			}
-
-			// Logic to determine status
-			let status = 'done'; // Always green if at least one history exists
-
-			// Check against assigned activities
-			const activityData = getActivityData(name) || {}; // Changed from (lat, lng)
-			const history = activityData.history || [];
-
-			// DUPLICATE CHECK
-			if (checkinTime) {
-				const alreadyExists = history.some(h => h.checkinTime === checkinTime);
-				if (alreadyExists) {
-					alert(`⚠️ Atenção: O horário ${checkinTime} já foi registrado anteriormente para esta atividade!`);
-					return;
-				}
-			}
-
-			// Get photo if uploaded - REMOVED
-			let photoBase64 = null;
-			/*
-			try {
-				photoBase64 = await getPhotoBase64();
-			} catch (error) {
-				console.error('Error converting photo:', error);
-				alert('⚠️ Erro ao processar foto. Continuando sem foto.');
-			}
-			*/
-
-			// Create new entry
-			const newEntry = {
-				timestamp: new Date().toISOString(),
-				checkinTime: checkinTime,
-				completedItems: completedItems,
-				userNote: userNote,
-				completedBy: currentUser.email,
-				foto: photoBase64
-			};
-
-			// Add to history
-			const newHistory = [...history, newEntry];
-
-			// Use latest entry for main display compatibility, but history is source of truth
-			const payload = {
-				...activityData, // keep existing data
-				completedItems: completedItems,
-				completedBy: currentUser.email,
-				completedAt: isOnline && db ? firebase.firestore.FieldValue.serverTimestamp() : new Date(),
-				userNote: userNote,
-				status: 'done', // Always done if has history
-				name: name,
-				lat: lat,
-				lng: lng,
-				checkinTime: checkinTime, // Last checkin
-				foto: photoBase64, // Last photo
-				history: newHistory // THE HISTORY
-			};
-
-			// Update local cache immediately
-			activitiesCache[key] = { ...activitiesCache[key], ...payload };
-			updateMarkerIcon(name, 'done');
-
-			// Save to localStorage
-			localStorage.setItem(key, JSON.stringify(activitiesCache[key]));
-
-			const msg = "Check-in salvo! ✅\nO formulário foi liberado para o próximo registro.";
-
-			if (db && isOnline) {
-				db.collection("activities").doc(key).set(payload, { merge: true }).then(() => {
-					alert(msg);
-					map.closePopup();
-				}).catch(err => {
-					console.error(err);
-					// Add to offline queue
-					addToSyncQueue({
-						type: 'completeActivity',
-						key: key,
-						data: payload
-					});
-					alert(msg + "\n⚠️ Será sincronizado quando a internet voltar.");
-					map.closePopup();
-				});
-			} else {
-				// Offline mode
-				addToSyncQueue({
-					type: 'completeActivity',
-					key: key,
-					data: payload
-				});
-				alert(msg + "\n💾 Salvo offline!");
-				map.closePopup();
-			}
-		}
-
-
-		// --- 3. MAP LOGIC ---
-		fileInput.addEventListener('change', function (e) {
-			const file = e.target.files[0];
-			if (!file) return;
-
-			const reader = new FileReader();
-			reader.onload = function (e) {
-				const kmlContent = e.target.result;
-
-				// Cache it locally
-				localforage.setItem('kmlFile', kmlContent);
-
-				// Save to cloud if admin and DB connected
-				if (db && currentUser) {
-					console.log('📤 Uploading KML to cloud...');
-					uploadKMLToCloud(kmlContent, file.name)
-						.then(() => {
-							console.log('✅ KML saved to cloud successfully!');
-							initMap(kmlContent);
-						})
-						.catch(err => {
-							console.error('❌ Failed to upload KML to cloud:', err);
-							alert('Erro ao salvar KML na nuvem. O arquivo foi salvo localmente.');
-							initMap(kmlContent);
-						});
-				} else {
-					// Not logged in or DB not ready - just use locally
-					initMap(kmlContent);
-				}
-			};
-			reader.readAsText(file);
-		});
-
-		let map;
-
-		function initMap(kmlText) {
-			loader.style.display = 'none';
-			mapDiv.style.display = 'block';
-
-			if (map) map.remove();
-			map = L.map('map').setView([-30.134, -51.317], 16);
-
-			// ALWAYS load Google Satellite (browser will cache tiles automatically)
-			map.getContainer().style.backgroundColor = '#e0e0e0'; // Gray fallback
-
-			const googleSatellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-				maxZoom: 20,
-				subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-				attribution: 'Map data &copy; Google',
-				errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' // Transparent tile for errors
-			});
-			googleSatellite.addTo(map);
-
-			// Show offline message if offline
-			if (!isOnline) {
-				const offlineControl = L.control({ position: 'bottomleft' });
-				offlineControl.onAdd = function () {
-					const div = L.DomUtil.create('div', 'offline-message');
-					div.innerHTML = `<div style="background: rgba(255,193,7,0.95); padding: 10px 15px; border-radius: 6px; font-size: 13px; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid #ff9800;">
-						<strong>📴 MODO OFFLINE</strong><br>
-						<small>✓ Usando tiles em cache<br>✓ Pode navegar e marcar atividades<br>✓ Sincronizará ao voltar online</small>
-					</div>`;
-					return div;
-				};
-				offlineControl.addTo(map);
-				// Save reference globally so we can remove it later
-				window.offlineMessageControl = offlineControl;
-			}
-
-			// ADD GEOLOCATION BUTTON (works offline!)
-			const locateControl = L.control({ position: 'topleft' });
-			locateControl.onAdd = function () {
-				const btn = L.DomUtil.create('button', 'locate-btn');
-				btn.innerHTML = '📍';
-				btn.title = 'Minha Localização';
-				btn.style.cssText = 'background: white; border: 2px solid #ccc; border-radius: 4px; width: 34px; height: 34px; cursor: pointer; font-size: 18px; box-shadow: 0 1px 5px rgba(0,0,0,0.4);';
-
-				btn.onclick = function () {
-					if (!navigator.geolocation) {
-						alert('⚠️ Geolocalização não disponível no seu navegador.');
-						return;
-					}
-
-					btn.innerHTML = '⏳';
-					navigator.geolocation.getCurrentPosition(
-						function (position) {
-							const lat = position.coords.latitude;
-							const lng = position.coords.longitude;
-
-							// Add/update user position marker
-							if (window.userMarker) {
-								window.userMarker.setLatLng([lat, lng]);
-							} else {
-								window.userMarker = L.circleMarker([lat, lng], {
-									color: '#4285F4',
-									fillColor: '#4285F4',
-									fillOpacity: 0.8,
-									radius: 8
-								}).addTo(map);
-								window.userMarker.bindPopup('<strong>📍 Você está aqui!</strong>');
-							}
-
-							// Zoom to user location
-							map.setView([lat, lng], 17);
-							window.userMarker.openPopup();
-							btn.innerHTML = '📍';
-
-							// Show success message
-							setTimeout(() => {
-								const msg = document.createElement('div');
-								msg.style.cssText = 'position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 10px 20px; border-radius: 4px; z-index: 10000; box-shadow: 0 2px 4px rgba(0,0,0,0.3);';
-								msg.textContent = '✓ Localização encontrada!';
-								document.body.appendChild(msg);
-								setTimeout(() => msg.remove(), 2000);
-							}, 100);
-						},
-						function (error) {
-							btn.innerHTML = '📍';
-							let errorMsg = 'Erro ao obter localização.';
-							if (error.code === 1) errorMsg = '⚠️ Permissão de localização negada.';
-							else if (error.code === 2) errorMsg = '⚠️ Localização não disponível.';
-							else if (error.code === 3) errorMsg = '⚠️ Timeout ao obter localização.';
-							alert(errorMsg);
-						},
-						{
-							enableHighAccuracy: true,
-							timeout: 10000,
-							maximumAge: 0
-						}
-					);
-				};
-
-				return btn;
-			};
-			locateControl.addTo(map);
-
-			const parser = new DOMParser();
-			const xmlDoc = parser.parseFromString(kmlText, "text/xml");
-			const placemarks = xmlDoc.getElementsByTagName("Placemark");
-
-			const layers = {};
-			const latLngs = [];
-
-			for (let i = 0; i < placemarks.length; i++) {
-				const placemark = placemarks[i];
-				const nameNode = placemark.getElementsByTagName("name")[0];
-				const name = nameNode ? nameNode.textContent : "Sem Nome";
-				const point = placemark.getElementsByTagName("Point")[0];
-
-				if (point) {
-					const coordsNode = point.getElementsByTagName("coordinates")[0];
-					if (!coordsNode) continue;
-
-					const coordsStr = coordsNode.textContent.trim();
-					const coords = coordsStr.split(",");
-					const lng = parseFloat(coords[0]);
-					const lat = parseFloat(coords[1]);
-
-					if (isNaN(lat) || isNaN(lng)) continue;
-					latLngs.push([lat, lng]);
-
-					// Capture for Export
-					allPlacemarksData.push({
-						name: name,
-						lat: lat,
-						lng: lng
-					});
-
-					let groupName = "Outros";
-					if (name.includes(" - ")) {
-						groupName = name.split(" - ")[0].trim();
-					} else if (name.startsWith("Empresa")) {
-						groupName = "Empresa";
-					} else if (name.toLowerCase().includes("bebedouro")) {
-						groupName = "Bebedouro";
-					}
-
-					// Capture for Export & Stats (Updated with Group)
-					allPlacemarksData.push({
-						name: name,
-						lat: lat,
-						lng: lng,
-						group: groupName
-					});
-
-					// Create Marker
-					// Default to Red (Pending) unless cache says Done
-					// Create Marker
-					const activityData = getActivityData(name); // Using name instead of coordinates
-					const visualStatus = getVisualStatus(activityData);
-
-					let initialIcon = redIcon;
-					if (visualStatus === 'done') initialIcon = greenIcon;
-					// (Partial ignored for hourly logic)
-
-					const marker = L.marker([lat, lng], { icon: initialIcon });
-
-					// Register marker for updates using name
-					const markerKey = sanitizeName(name);
-					markersMap[markerKey] = marker;
-
-					// Dynamic Popup Function
-					marker.bindPopup(() => {
-						const data = getActivityData(name); // Using name instead of coordinates
-
-						// Helper to get display text
-						let activityText = "";
-						let selectedList = [];
-						let userNote = "";
-
-						if (data) {
-							if (typeof data === 'string') {
-								activityText = data; // Legacy
-							} else {
-								activityText = data.text || "";
-								selectedList = data.selectedActivities || [];
-								userNote = data.userNote || "";
-							}
-						}
-
-						const isDone = data && data.status === 'done';
-						const isPartial = data && data.status === 'partial';
-						const directionsLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-
-						let content = `<div style="font-family: sans-serif; min-width: 280px;">
-                            <h3 style="margin-top: 0;">${name}</h3>
-                            <p style="margin: 5px 0;"><small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small></p>`;
-
-						if (isAdmin) {
-							// ADMIN VIEW
-							let checkboxesHtml = "";
-							if (activityTypesCache.length > 0) {
-								checkboxesHtml += `<div style="text-align:left; max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; margin-bottom:5px;">`;
-								// FILTER: Only show activities assigned to this group
-								const filteredActivities = activityTypesCache.filter(type => {
-									return type.assignedGroups && type.assignedGroups.includes(groupName);
-								});
-
-								if (filteredActivities.length > 0) {
-									filteredActivities.forEach(type => {
-										const isChecked = selectedList.includes(type.name) ? 'checked' : '';
-										checkboxesHtml += `
-							<label style="display:block; margin-bottom:3px; cursor:pointer;">
-								<input type="checkbox" class="activity-checkbox" value="${type.name}" ${isChecked}> ${type.name}
-							</label>`;
-									});
-								} else {
-									checkboxesHtml += `<p><small><i>Nenhuma atividade configurada para o grupo "${groupName}".</i></small></p>`;
-								}
-								checkboxesHtml += `</div>`;
-							} else {
-								checkboxesHtml = `<p><small><i>Nenhum tipo cadastrado. Use o botão "Tipos de Atividade" no topo.</i></small></p>`;
-							}
-
-							content += `
-                                <div style="margin: 10px 0; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
-                                    <label><strong>📝 Atividades:</strong></label>
-									${checkboxesHtml}
-                                    <label><small>Obs / Outros:</small></label>
-                                    <textarea id="activityInput" style="width: 100%; height: 40px; margin-top: 2px;">${activityText}</textarea><br>
-                                    <div style="margin: 5px 0; display: flex; justify-content: space-between; align-items: center;">
-                                        															<button onclick="saveActivity('${name.replace(/'/g, "\\'")}'  , ${lat}, ${lng})" style="cursor: pointer; background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px;">Salvar</button>
-                                        <small style="color: #666;">${isDone ? '✅ Já Concluído' : (isPartial ? '🟠 Parcial' : '⏳ Pendente')}</small>
-                                    </div>
-                                    ${userNote ? `<div style="margin-top:5px; border-top:1px solid #eee; padding-top:5px;"><small><strong>💬 Recado do Técnico:</strong> ${userNote}</small></div>` : ''}
-                                </div>
-                            `;
-						} else {
-							// USER VIEW
-							// MODIFIED: Show activities from group even if not saved individually
-							const filteredActivities = activityTypesCache.filter(type => {
-								return type.assignedGroups && type.assignedGroups.includes(groupName);
-							});
-							const groupActivitiesList = filteredActivities.map(t => t.name);
-
-							// Use saved activities if exist, otherwise use group activities
-							const activitiesToShow = selectedList.length > 0 ? selectedList : groupActivitiesList;
-							const hasContent = activitiesToShow.length > 0 || activityText;
-
-							// DEBUG: Log to help troubleshoot
-							console.log('UserView DEBUG:', {
-								groupName,
-								activityTypesCacheLength: activityTypesCache.length,
-								filteredActivitiesLength: filteredActivities.length,
-								activitiesToShowLength: activitiesToShow.length,
-								hasContent
-							});
-
-							if (hasContent) {
-								let displayHtml = "";
-								const completedItems = data ? (data.completedItems || []) : [];
-
-								// UNIFIED START
-								if (true) { // Unified View Wrapper
-									// Old isDone Logic Removed
-									if (true) {
-										/*
-										displayHtml += `<div style="text-align:left; margin:5px 0;">`;
-										selectedList.forEach(item => {
-											const wasDone = completedItems.includes(item);
-											displayHtml += `
-												<div style="margin-bottom:2px; color:${wasDone ? '#2e7d32' : '#777'};">
-													${wasDone ? '✅' : '🔲'} ${item}
-												</div>`;
-										});
-										displayHtml += `</div>`;
-									}
-									if (activityText) {
-										displayHtml += `<p style="margin:5px 0;"><em>${activityText}</em></p>`;
-									}
-	
-									const date = (data && data.completedAt) ? new Date(data.completedAt.seconds * 1000).toLocaleString() : 'Data N/A';
-	
-									const statusTitle = isDone ? '<strong style="color: #2e7d32;">✅ ATIVIDADE CONCLUÍDA</strong>' : '<strong style="color: #ef6c00;">🟠 ATIVIDADE PARCIAL</strong>';
-									const bgColor = isDone ? '#e8f5e9' : '#fff3e0';
-									const borderColor = isDone ? '#4CAF50' : '#ff9800';
-	
-									content += `
-										<div style="background: ${bgColor}; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid ${borderColor};">
-											${statusTitle}<br>
-											${displayHtml}
-											${userNote ? `<br><small>💬 "<em>${userNote}</em>"</small><br>` : ''}
-											<hr style="border: 0; border-top: 1px solid #ddd; margin: 5px 0;">
-											<small>👤 <b>${(data && data.completedBy) || 'Usuário'}</b></small><br>
-											<small>🕒 ${date}</small>
-											${isPartial ? `<div style="margin-top:10px;"><button onclick="concludeActivity(${lat}, ${lng}, prompt('Nova observação?'))" style="font-size:0.8em; cursor:pointer;">Continuar / Atualizar</button></div>` : ''}
-										</div>
-									`;
-								} else {
-									// PENDING OR PARTIAL STATE (Editable)
-									if (selectedList.length > 0) {
-										displayHtml += `<div style="text-align:left; margin:5px 0; max-height:150px; overflow-y:auto;">`;
-										selectedList.forEach(item => {
-											const isChecked = completedItems.includes(item) ? 'checked' : '';
-											displayHtml += `
-												<label style="display:block; margin-bottom:5px; cursor:pointer;">
-													<input type="checkbox" class="user-check" value="${item}" ${isChecked}> ${item}
-												</label>`;
-										});
-										displayHtml += `</div>`;
-									}
-									if (activityText) {
-										displayHtml += `<div style="margin:5px 0; padding:5px; background:#fff; border:1px dashed #ccc;"><em>${activityText}</em></div>`;
-									}
-	
-									const isPartialMsg = isPartial ? '<strong style="color: #ef6c00;">🟠 ATIVIDADE PARCIAL</strong>' : '<strong>⚠️ Atividade Pendente:</strong>';
-									const bgColor = isPartial ? '#fff3e0' : '#fff3e0';
-									const borderColor = isPartial ? '#ff9800' : '#ff9800';
-	
-									content += `
-										<div style="background: ${bgColor}; padding: 10px; border-radius: 4px; margin: 10px 0; border-left: 4px solid ${borderColor};">
-											${isPartialMsg}<br>
-											<small>Marque o que foi feito:</small>
-											${displayHtml}
-											<div style="margin-top: 10px;">
-												<input type="text" id="userNoteInput" placeholder="💬 Deixe um recado (opcional)..." value="${userNote}" style="width: 100%; padding: 5px; margin-bottom: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 3px;">
-												<button onclick="concludeActivity(${lat}, ${lng}, document.getElementById('userNoteInput').value)" style="width: 100%; padding: 8px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-													${isPartial ? 'ATUALIZAR / CONCLUIR' : '✅ MARCAR COMO CONCLUÍDO'}
-												</button>
-											</div>
-										</div>
-									`;
-									*/
-									} // Close inner
-								} // Close outer
-
-								// UNIFIED LOGIC INSERTION
-								{
-									// UNIFIED EDITABLE VIEW
-									let displayHtml = "";
-									// Always reset form for new entry, ignore data.completedItems
-									const completedItems = [];
-
-									// 1. Build Checkbox List (Always Editable)
-									if (activitiesToShow.length > 0) {
-										displayHtml += `<div style="text-align:left; margin:5px 0; max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px;">`;
-										activitiesToShow.forEach(item => {
-											// Default unchecked
-											displayHtml += `
-												<label style="display:block; margin-bottom:5px; cursor:pointer;">
-													<input type="checkbox" class="user-check" value="${item}"> ${item}
-												</label>`;
-										});
-										displayHtml += `</div>`;
-									}
-
-									if (activityText) {
-										displayHtml += `<div style="margin:5px 0; padding:5px; background:#fff; border:1px dashed #ccc;"><em>${activityText}</em></div>`;
-									}
-
-									// 2. Dynamic Styling
-									let statusTitle = '<strong>⚠️ Registre seu Check-in:</strong>';
-									let bgColor = '#fff';
-									let borderColor = '#2196F3';
-									let btnText = '✅ SALVAR CHECK-IN';
-									let btnColor = '#2196F3'; // Blue
-
-									// Render History
-									let historyHtml = '';
-									if (data && data.history && data.history.length > 0) {
-										// Sort descending by checkin time (HH:MM)
-										const sortedHistory = [...data.history].sort((a, b) => {
-											const tA = a.checkinTime || "00:00";
-											const tB = b.checkinTime || "00:00";
-											return tB.localeCompare(tA);
-										});
-										historyHtml += '<div style="margin-top:15px; max-height:200px; overflow-y:auto; border-top:2px solid #ddd; padding-top:10px;">';
-										historyHtml += '<h4 style="margin:0 0 5px 0; color:#555;">📜 Histórico de Check-ins</h4>';
-
-										sortedHistory.forEach(h => {
-											const timeStr = h.checkinTime || "??:??";
-											const userStr = h.completedBy ? h.completedBy.split('@')[0] : 'User';
-											const itemsStr = (h.completedItems || []).length + " item(s)";
-											const noteStr = h.userNote ? `<i>"${h.userNote}"</i>` : '';
-
-											historyHtml += `
-                                            <div style="background:#f9f9f9; border-bottom:1px solid #eee; padding:5px; font-size:0.85em; margin-bottom:4px;">
-                                                <div><strong>🕒 ${timeStr}</strong> - <span style="color:#2196F3">${userStr}</span></div>
-                                                <div style="color:#666;">${itemsStr} ${noteStr ? '- ' + noteStr : ''}</div>
-                                            </div>`;
-										});
-
-										historyHtml += '</div>';
-									}
-
-									// TIME OPTIONS GENERATOR
-									let timeOptionsHtml = '<option value="" disabled selected>-- Selecione o Horário --</option>';
-									for (let h = 0; h <= 23; h++) {
-										const hh = h.toString().padStart(2, '0') + ':00';
-										timeOptionsHtml += `<option value="${hh}">${hh}</option>`;
-									}
-
-									content += `
-										<div style="background: ${bgColor}; padding: 10px; border-radius: 4px; margin: 10px 0; border: 1px solid ${borderColor};">
-											${statusTitle}<br>
-											<div style="margin-bottom:5px;"><small>Marque os itens realizados:</small></div>
-											
-											${displayHtml}
-											
-											<div style="margin-top: 10px;">
-												<input type="text" id="userNoteInput" placeholder="💬 Deixe um recado (opcional)..." value="" style="width: 100%; padding: 5px; margin-bottom: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 3px;">
-												
-												<!-- FIELD CHECKIN TIME -->
-												<div style="margin-bottom: 10px;">
-													<label style="display: block; margin-bottom: 5px; font-size: 0.95em; color: #333; font-weight: bold;">🕒 Horário do Check-in (Obrigatório):</label>
-													<select id="checkinTimeInput" style="width: 100%; padding: 10px; box-sizing: border-box; border: 2px solid #ddd; border-radius: 6px; background: white; font-size: 1rem; color: #333; cursor: pointer;">
-														${timeOptionsHtml}
-													</select>
-												</div>
-
-												<!-- FIELD FOTO REMOVED -->
-												
-												<button onclick="concludeActivity('${name.replace(/'/g, "\\'")}', ${lat}, ${lng}, document.getElementById('userNoteInput').value)" style="width: 100%; padding: 8px; background: ${btnColor}; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-													${btnText}
-												</button>
-                                                
-                                                ${historyHtml}
-											</div>
-										</div>
-									`;
-								}
-							} else {
-								content += `<p style="color: #777;"><em>Nenhuma atividade cadastrada para este grupo.</em><br><small>Peça ao administrador para configurar atividades para "${groupName}".</small></p>`;
-							}
-						}
-
-						content += `
-                            <div style="margin-top: 10px; text-align: center;">
-                                <a href="${directionsLink}" target="_blank" style="display: inline-block; padding: 6px 12px; background: white; color: #4285F4; border: 1px solid #4285F4; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em;">📍 Como Chegar</a>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">🏭</div>
+                    <div>
+                        <h1 class="title">Sistema de Controle</h1>
+                        <p class="subtitle">Atividades de Manutenção - Caldeira <span
+                                style="opacity: 0.6; font-size: 0.8rem;">v4.0.0</span></p>
+                    </div>
+                </div>
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value" id="totalActivities">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Concluídas</div>
+                        <div class="stat-value completed" id="completedActivities">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Progresso Geral</div>
+                        <div class="stat-value progress" id="overallProgress">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label"
+                            style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            Críticas
+                            <span class="critical-indicator"
+                                style="display: inline-block; width: 10px; height: 10px; background: #ff0000; border-radius: 50%; box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; animation: pulse 2s infinite;"></span>
+                        </div>
+                        <div class="stat-value" id="criticalActivities" style="color: #ff0000;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Soldas OK</div>
+                        <div class="stat-value completed" id="totalWeldsStat">0 / 0 (0%)</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" id="activitiesTab" onclick="showActivitiesTab()">
+                📋 Atividades
+            </button>
+            <button class="tab-button" id="sCurveTab" onclick="showSCurveTab()">
+                📈 Curva S
+            </button>
+            <button class="tab-button" id="weldClustersTab" onclick="showWeldClustersTab()">
+                📊 Andamento
+            </button>
+        </div>
+
+        <!-- Activities Tab Content -->
+        <div class="tab-content" id="activitiesTabContent">
+
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="filterSearch" class="filter-label">🔎 Buscar Atividade:</label>
+                    <input type="text" id="filterSearch" class="filter-input" placeholder="Digite para buscar..."
+                        autocomplete="off" spellcheck="false" name="search-activity" data-form-type="other" readonly
+                        onfocus="this.removeAttribute('readonly');">
+                </div>
+                <div class="filter-group">
+                    <label for="filterID" class="filter-label">🔍 Filtrar por ID:</label>
+                    <select id="filterID" class="filter-select">
+                        <option value="">Todos os IDs</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterStatus" class="filter-label">📊 Status:</label>
+                    <select id="filterStatus" class="filter-select">
+                        <option value="">Todos</option>
+                        <option value="completed">Concluídas (100%)</option>
+                        <option value="inProgress">Em Andamento (1-99%)</option>
+                        <option value="notStarted">Não Iniciadas (0%)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Record Navigator -->
+            <div class="record-navigator" id="recordNavigator">
+                <button class="nav-button" id="prevRecord" title="Registro Anterior">
+                    ◀ Anterior
+                </button>
+                <div class="record-info" id="recordInfo">
+                    REGISTRO 1 de 1
+                </div>
+                <button class="nav-button" id="nextRecord" title="Próximo Registro">
+                    Próximo ▶
+                </button>
+            </div>
+
+            <!-- Activities List -->
+            <div class="activities-container" id="activitiesContainer">
+                <!-- Activities will be loaded here dynamically -->
+            </div>
+
+            <!-- Upload Button -->
+            <div class="upload-section" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <label for="fileInput" class="btn-upload admin-only">
+                    📄 Importar Excel / Texto
+                </label>
+                <input type="file" id="fileInput" accept=".txt, .xlsx, .xls" style="display: none;">
+
+                <button onclick="openAddActivityModal()" class="btn-upload admin-only"
+                    style="background: var(--primary);">
+                    ➕ Novo Registro (Manual)
+                </button>
+
+                <button onclick="clearAllData()" class="btn-upload admin-only" style="background: #dc2626;">
+                    🗑️ Limpar Dados
+                </button>
+
+                <button onclick="exportToExcel()" class="btn-upload" style="background: #10b981;">
+                    📥 Exportar para Excel
+                </button>
+
+                <button id="securityBtnMain" onclick="openSecurityModal()" class="btn-upload"
+                    style="background: #10b981;">
+                    🛡️ Controle de Segurança
+                </button>
+            </div>
+        </div> <!-- End Activities Tab Content -->
+
+        <!-- Manual Activity Modal -->
+        <div id="addActivityModal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>➕ Novo Registro Manual</h2>
+                    <button class="modal-close" onclick="closeAddActivityModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addActivityForm" class="admin-form" style="display: grid; gap: 1rem;">
+                        <input type="hidden" id="editingUniqueKey">
+                        <div class="filter-group">
+                            <label class="filter-label">ID da Atividade:</label>
+                            <input type="text" id="manualId" class="filter-input" placeholder="Ex: 1" required>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Nome da Tarefa:</label>
+                            <input type="text" id="manualName" class="filter-input" placeholder="Descrição da atividade"
+                                required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="filter-group">
+                                <label class="filter-label">Data Início:</label>
+                                <input type="text" id="manualStart" class="filter-input" placeholder="DD/MM/YYYY"
+                                    required>
                             </div>
-                        </div>`;
+                            <div class="filter-group">
+                                <label class="filter-label">Data Término:</label>
+                                <input type="text" id="manualEnd" class="filter-input" placeholder="DD/MM/YYYY"
+                                    required>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="filter-group">
+                                <label class="filter-label">Duração:</label>
+                                <input type="text" id="manualDuration" class="filter-input" placeholder="Ex: 152 h">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">V. Avanço/Soldas (Total):</label>
+                                <input type="number" id="manualTotalWelds" class="filter-input" placeholder="Ex: 24">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="filter-group">
+                                <label class="filter-label">Crítica?</label>
+                                <select id="manualCritical" class="filter-select">
+                                    <option value="NÃO">NÃO</option>
+                                    <option value="SIM">SIM</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Atividade Pai (Resumo)?</label>
+                                <select id="manualSummary" class="filter-select">
+                                    <option value="NÃO">NÃO (Sub-tarefa)</option>
+                                    <option value="SIM">SIM (Cabeçalho/Grupo)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-control"
+                        style="width: auto; padding: 0 2rem; background: var(--success); color: white;"
+                        onclick="saveManualActivity()">💾 Salvar Atividade</button>
+                    <button class="btn-control"
+                        style="width: auto; padding: 0 2rem; background: var(--danger); color: white;"
+                        onclick="closeAddActivityModal()">❌ Cancelar</button>
+                </div>
+            </div>
+        </div>
 
-						return content;
-					});
-
-					if (!layers[groupName]) {
-						layers[groupName] = L.layerGroup();
-					}
-					layers[groupName].addLayer(marker);
-				}
-			}
-
-			if (latLngs.length > 0) {
-				map.fitBounds(latLngs);
-			}
-
-			window.overlayMaps = {};
-			const sortedKeys = Object.keys(layers).sort();
-			sortedKeys.forEach(key => {
-				window.overlayMaps[key] = layers[key];
-				layers[key].addTo(map);
-			});
-
-			const layerControl = L.control.layers(null, window.overlayMaps, { collapsed: false }).addTo(map);
-
-			// --- BULK TOGGLE BUTTONS ---
-			const container = document.querySelector('.leaflet-control-layers-list');
-			const buttonContainer = document.createElement('div');
-			buttonContainer.style.padding = "5px";
-			buttonContainer.style.textAlign = "center";
-			buttonContainer.style.borderBottom = "1px solid #ccc";
-			buttonContainer.style.marginBottom = "5px";
-
-			buttonContainer.innerHTML = `
-			< button onclick = "toggleAllLayers(true)" style = "font-size: 12px; cursor: pointer;" > Min</button >
-                <button onclick="toggleAllLayers(false)" style="font-size: 12px; cursor: pointer;">Nenhum</button>
-                <button onclick="toggleAllLayers(true)" style="font-size: 12px; cursor: pointer; margin-left: 5px;">Todos</button>
-		`;
-			// Simplified: Just Todos / Nenhum is better
-			buttonContainer.innerHTML = `
-			<a href="#" onclick="toggleAllLayers(true); return false;" style="font-size: 12px; margin-right: 10px;">Marcar Todos</a>
-				<a href="#" onclick="toggleAllLayers(false); return false;" style="font-size: 12px; color: red;">Desmarcar Todos</a>
-		`;
-
-			container.insertBefore(buttonContainer, container.firstChild);
-
-			// Flag to prevent performance issues during bulk toggle
-			let isBulkUpdate = false;
-
-			window.toggleAllLayers = (show) => {
-				isBulkUpdate = true; // unique flag
-				const layerKeys = Object.keys(overlayMaps);
-				layerKeys.forEach(key => {
-					const layer = overlayMaps[key];
-					if (show) {
-						if (!map.hasLayer(layer)) map.addLayer(layer);
-					} else {
-						if (map.hasLayer(layer)) map.removeLayer(layer);
-					}
-				});
-				isBulkUpdate = false;
-				updateStats(); // Force single update after bulk toggle
-			};
-
-			// --- STATS DASHBOARD (Inside initMap) ---
-			const statsControl = L.control({ position: 'bottomright' });
-			statsControl.onAdd = function (map) {
-				const div = L.DomUtil.create('div', 'info stats');
-				div.style.background = 'white';
-				div.style.padding = '10px';
-				div.style.borderRadius = '5px';
-				div.style.boxShadow = '0 0 15px rgba(0,0,0,0.2)';
-				div.style.minWidth = '200px';
-				div.style.fontFamily = 'sans-serif';
-				div.style.zIndex = '1000';
-				div.innerHTML = `
-			<h4 style="margin: 0 0 5px 0; border-bottom: 2px solid #2196F3; padding-bottom: 5px; color: #333;">📊 Dashboard Geral</h4>
-				<div id="statsContent">
-					<em>Calculando...</em>
-				</div>
-		`;
-				return div;
-			};
-			statsControl.addTo(map);
-
-			// Listen for layer changes to update Stats
-			map.on('overlayadd', () => { if (!isBulkUpdate) updateStats(); });
-			map.on('overlayremove', () => { if (!isBulkUpdate) updateStats(); });
-
-			// Function defined INSIDE initMap to access 'layers' and 'map'
-			function updateStats() {
-				if (typeof map === 'undefined') return;
-
-				let total = 0;
-				let completed = 0;
-
-				allPlacemarksData.forEach(item => {
-					// Check visibility using the captured 'layers' object
-					if (layers[item.group] && map.hasLayer(layers[item.group])) {
-						total++;
-						const data = getActivityData(item.name); // Using name instead of coordinates
-						if (data && data.status === 'done') {
-							completed++;
-						}
-					}
-				});
-
-				const pending = total - completed;
-				const percent = total > 0 ? ((completed / total) * 100).toFixed(1) : "0.0";
-
-				const html = `
-			<div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                        <span>📍 Total (Visível):</span> <strong>${total}</strong>
+        <!-- S-Curve Tab Content -->
+        <div class="tab-content" id="sCurveTabContent" style="display: none;">
+            <div class="scurve-container">
+                <div class="scurve-header">
+                    <h2>📈 Curva S - Progresso Acumulado</h2>
+                    <p>Comparação entre progresso planejado e real ao longo do tempo</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="sCurveChart"></canvas>
+                </div>
+                <div class="scurve-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #3b82f6;"></span>
+                        <span class="legend-label">Planejado - Baseado nas datas de início/fim</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px; color: #2e7d32;">
-                        <span>✅ Concluídos:</span> <strong>${completed}</strong>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #10b981;"></span>
+                        <span class="legend-label">Real - Progresso atual registrado</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #d32f2f;">
-                        <span>⏳ Pendentes:</span> <strong>${pending}</strong>
+                </div>
+            </div>
+        </div> <!-- End S-Curve Tab Content -->
+
+        <!-- Weld Clusters Tab Content -->
+        <div class="tab-content" id="weldClustersTabContent" style="display: none;">
+            <div class="scurve-container">
+                <div class="scurve-header">
+                    <h2>📊 Mapa de Soldas (Cluster View)</h2>
+                    <p>Visualização de todos os clusters de solda. Verde = Concluído.</p>
+                </div>
+
+                <div class="weld-stats-summary"
+                    style="margin-bottom: 1.5rem; display: flex; gap: 2rem; justify-content: center;">
+                    <div class="stat-card" style="min-width: 150px;">
+                        <div class="stat-label">Total de Soldas</div>
+                        <div class="stat-value" id="clusterTotalWelds">0</div>
                     </div>
-                    
-                    <div style="background: #e0e0e0; border-radius: 4px; overflow: hidden; height: 12px; position: relative;">
-                        <div style="background: #4CAF50; width: ${percent}%; height: 100%; transition: width 0.5s ease-in-out;"></div>
-                        <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 9px; line-height: 12px; color: #333; font-weight: bold;">${percent}%</span>
+                    <div class="stat-card" style="min-width: 150px;">
+                        <div class="stat-label">Soldas Realizadas</div>
+                        <div class="stat-value completed" id="clusterCompletedWelds">0</div>
                     </div>
-		`;
-
-				const container = document.getElementById('statsContent');
-				if (container) container.innerHTML = html;
-			}
-
-			// Initial Stats Update
-			updateStats();
-		}
-
-		// --- PHOTO HANDLING FUNCTIONS ---
-
-		// Preview photo when selected
-		document.addEventListener('change', function (e) {
-			if (e.target && e.target.id === 'photoInput') {
-				const file = e.target.files[0];
-				const preview = document.getElementById('photoPreview');
-				const previewImg = document.getElementById('photoPreviewImg');
-				const errorMsg = document.getElementById('photoError');
-
-				if (!file) return;
-
-				// Validate size (500KB max)
-				const maxSize = 500 * 1024; // 500KB in bytes
-				if (file.size > maxSize) {
-					errorMsg.textContent = '⚠️ Foto muito grande! Máximo: 2MB';
-					errorMsg.style.display = 'block';
-					e.target.value = ''; // Clear input
-					preview.style.display = 'none';
-					return;
-				}
-
-				errorMsg.style.display = 'none';
-
-				// Show preview
-				const reader = new FileReader();
-				reader.onload = function (e) {
-					previewImg.src = e.target.result;
-					preview.style.display = 'block';
-				};
-				reader.readAsDataURL(file);
-			}
-		});
-
-		// Remove photo
-		window.removePhoto = function () {
-			const photoInput = document.getElementById('photoInput');
-			const preview = document.getElementById('photoPreview');
-			const errorMsg = document.getElementById('photoError');
-
-			if (photoInput) photoInput.value = '';
-			if (preview) preview.style.display = 'none';
-			if (errorMsg) errorMsg.style.display = 'none';
-		};
-
-		// Convert photo to Base64 for storage (with compression)
-		function getPhotoBase64() {
-			return new Promise((resolve, reject) => {
-				const photoInput = document.getElementById('photoInput');
-				if (!photoInput || !photoInput.files || !photoInput.files[0]) {
-					resolve(null); // No photo selected
-					return;
-				}
-
-				const file = photoInput.files[0];
-
-				// Compress before returning
-				compressImage(file)
-					.then(compressedDataUrl => resolve(compressedDataUrl))
-					.catch(err => {
-						console.error('Compression failed, using original:', err);
-						// Fallback to original if compression fails
-						const reader = new FileReader();
-						reader.onload = (e) => resolve(e.target.result);
-						reader.onerror = reject;
-						reader.readAsDataURL(file);
-					});
-			});
-		}
-
-		// --- DAILY RESET TIMER =====
-
-		function calculateTimeUntilMidnight() {
-			const now = new Date();
-			const midnight = new Date(now);
-			midnight.setHours(24, 0, 0, 0); // Next midnight
-
-			const diff = midnight - now;
-			const hours = Math.floor(diff / (1000 * 60 * 60));
-			const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-			const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-			return { hours, minutes, seconds, totalMs: diff };
-		}
-
-		function updateTimerDisplay() {
-			const time = calculateTimeUntilMidnight();
-			const display = document.getElementById('timerDisplay');
-			const timer = document.getElementById('countdownTimer');
-
-			if (!display || !timer) return;
-
-			// Format HH:MM:SS
-			const formatted = `${String(time.hours).padStart(2, '0')}:${String(time.minutes).padStart(2, '0')}:${String(time.seconds).padStart(2, '0')} `;
-			display.textContent = formatted;
-
-			// Color coding based on time remaining
-			if (time.totalMs < 30 * 60 * 1000) { // < 30 minutes
-				display.style.color = '#d32f2f'; // Red
-			} else if (time.totalMs < 60 * 60 * 1000) { // < 1 hour
-				display.style.color = '#f57c00'; // Orange
-			} else {
-				display.style.color = '#2e7d32'; // Green
-			}
-
-			// Check if midnight reached (with 1-second tolerance)
-			if (time.totalMs < 1000) {
-				performDailyReset();
-			}
-		}
-
-		// Backup current day's data to activities_history before reset
-		function backupDailyData() {
-			return new Promise((resolve, reject) => {
-				if (!db) {
-					console.warn('Firestore not initialized, skipping backup.');
-					resolve(); // Continue without backup if offline
-					return;
-				}
-
-				// Get current date in YYYY-MM-DD format
-				const now = new Date();
-				const dateStr = now.toISOString().split('T')[0]; // e.g., "2025-12-16"
-
-				console.log(`Creating backup for ${dateStr}...`);
-
-				// Collect all activity data
-				const activitiesSnapshot = {};
-				let totalActivities = 0;
-				let completed = 0;
-				let partial = 0;
-				let pending = 0;
-
-				for (const key in activitiesCache) {
-					const activity = activitiesCache[key];
-					activitiesSnapshot[key] = { ...activity };
-					totalActivities++;
-
-					// Count statistics
-					if (activity.status === 'done') completed++;
-					else if (activity.status === 'partial') partial++;
-					else pending++;
-				}
-
-				// Create backup document
-				const backupDoc = {
-					date: dateStr,
-					timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-					activities: activitiesSnapshot,
-					statistics: {
-						total: totalActivities,
-						completed: completed,
-						partial: partial,
-						pending: pending
-					}
-				};
-
-				// Save to activities_history collection
-				db.collection('activities_history')
-					.doc(dateStr)
-					.set(backupDoc)
-					.then(() => {
-						console.log(`✅ Backup saved successfully: ${totalActivities} activities`);
-						resolve();
-					})
-					.catch(err => {
-						console.error('❌ Backup failed:', err);
-						reject(err);
-					});
-			});
-		}
-
-		function performDailyReset() {
-			console.log('=== PERFORMING AUTOMATIC DAILY RESET ===');
-
-			// No confirmation needed - fully automatic
-			console.log('📦 Salvando backup automático do dia atual...');
-
-			// Step 1: Backup current data
-			backupDailyData()
-				.then(() => {
-					console.log('✅ Backup concluído. Iniciando reset automático...');
-					// Step 2: Perform reset after successful backup
-					executeReset();
-				})
-				.catch(err => {
-					console.error('❌ Erro ao fazer backup:', err);
-
-					// Log error but continue with reset anyway (automatic mode)
-					console.warn('⚠️ Backup falhou, mas continuando com reset automático.');
-					executeReset();
-				});
-		}
-
-		// Separated reset execution logic
-		function executeReset() {
-			let resetCount = 0;
-			const promises = [];
-
-			// Iterate through all activities in cache
-			for (const key in activitiesCache) {
-				const activity = activitiesCache[key];
-
-				// Preserve admin data, clear user completion data
-				const resetData = {
-					// Keep admin fields
-					text: activity.text || '',
-					selectedActivities: activity.selectedActivities || [],
-					lat: activity.lat,
-					lng: activity.lng,
-
-					// Reset user fields
-					completedItems: [],
-					status: 'pending',
-					completedBy: firebase.firestore.FieldValue.delete(),
-					completedAt: firebase.firestore.FieldValue.delete(),
-					userNote: firebase.firestore.FieldValue.delete()
-				};
-
-				// Update cache
-				activitiesCache[key] = resetData;
-
-				// Update marker icon to red
-				const marker = markersMap[key];
-				if (marker) {
-					marker.setIcon(redIcon);
-				}
-
-				// Update Firestore
-				if (db) {
-					const promise = db.collection('activities').doc(key).set(resetData, { merge: true });
-					promises.push(promise);
-				}
-
-				// Update localStorage
-				localStorage.setItem(key, JSON.stringify(resetData));
-				resetCount++;
-			}
-
-			// Wait for all Firestore updates
-			if (db && promises.length > 0) {
-				Promise.all(promises).then(() => {
-					console.log(`Daily reset completed: ${resetCount} activities reset.`);
-					alert(`✅ Reset Diário Concluído!\n\n${resetCount} atividades foram resetadas para o novo dia.`);
-					location.reload(); // Reload for clean state
-				}).catch(err => {
-					console.error('Error during daily reset:', err);
-					alert(`⚠️ Erro ao salvar reset na nuvem.Os dados locais foram resetados.\n\nErro: ${err.message} `);
-					location.reload(); // Reload anyway
-				});
-			} else {
-				console.log(`Daily reset completed(local only): ${resetCount} activities reset.`);
-				alert(`✅ Reset Diário Concluído(Apenas Local)!\n\n${resetCount} atividades foram resetadas.`);
-				location.reload(); // Reload for clean state
-			}
-		}
-
-		// Initialize timer (start when map loads)
-		function initDailyResetTimer() {
-			const timer = document.getElementById('countdownTimer');
-			if (timer) {
-				timer.style.display = 'block';
-				updateTimerDisplay();
-
-				// Update every second
-				setInterval(updateTimerDisplay, 1000);
-			}
-		}
-
-		// Start timer when map is visible
-		const originalInitMap = initMap;
-		if (typeof originalInitMap === 'function') {
-			// Wrap existing initMap to start timer after map loads
-			window.addEventListener('load', () => {
-				setTimeout(() => {
-					initDailyResetTimer();
-				}, 1000);
-			});
-		}
-
-		// ===== HISTORICAL CHART DASHBOARD =====
-
-		let activityChartInstance = null;
-
-		function openChartModal() {
-			const modal = document.getElementById('chartModal');
-			const loading = document.getElementById('chartLoadingMsg');
-			const error = document.getElementById('chartErrorMsg');
-			const container = document.getElementById('chartContainer');
-
-			// Show modal and loading message
-			modal.style.display = 'flex';
-			loading.style.display = 'block';
-			error.style.display = 'none';
-			container.style.display = 'none';
-
-			// Fetch and render data
-			fetchHistoricalData()
-				.then(data => {
-					loading.style.display = 'none';
-					if (data.length === 0) {
-						error.querySelector('p').textContent = '📭 Nenhum dado histórico disponível ainda.\n\nOs backups serão criados automaticamente após cada reset diário.';
-						error.style.display = 'block';
-					} else {
-						container.style.display = 'block';
-						renderActivityChart(data);
-					}
-				})
-				.catch(err => {
-					console.error('Error fetching historical data:', err);
-					loading.style.display = 'none';
-					error.querySelector('p').textContent = `❌ Erro ao carregar dados históricos: \n${err.message} `;
-					error.style.display = 'block';
-				});
-		}
-
-		function fetchHistoricalData() {
-			return new Promise((resolve, reject) => {
-				if (!db) {
-					reject(new Error('Firestore não inicializado'));
-					return;
-				}
-
-				db.collection('activities_history')
-					.orderBy('date', 'asc')
-					.get()
-					.then(snapshot => {
-						const data = [];
-						snapshot.forEach(doc => {
-							const docData = doc.data();
-							data.push({
-								date: doc.id, // Document ID is the date
-								completed: docData.statistics?.completed || 0,
-								partial: docData.statistics?.partial || 0,
-								pending: docData.statistics?.pending || 0,
-								total: docData.statistics?.total || 0
-							});
-						});
-
-						// Add current day data from activitiesCache
-						const today = new Date().toISOString().split('T')[0];
-						let todayCompleted = 0;
-						let todayPartial = 0;
-						let todayPending = 0;
-						let todayTotal = 0;
-
-						for (const key in activitiesCache) {
-							const activity = activitiesCache[key];
-							todayTotal++;
-							if (activity.status === 'done') todayCompleted++;
-							else if (activity.status === 'partial') todayPartial++;
-							else todayPending++;
-						}
-
-						// Check if today is already in historical data
-						const todayExists = data.some(d => d.date === today);
-						if (!todayExists && todayTotal > 0) {
-							// Add today's data
-							data.push({
-								date: today,
-								completed: todayCompleted,
-								partial: todayPartial,
-								pending: todayPending,
-								total: todayTotal
-							});
-						}
-
-						resolve(data);
-					})
-					.catch(err => {
-						reject(err);
-					});
-			});
-		}
-
-		function renderActivityChart(data) {
-			const canvas = document.getElementById('activityChart');
-			const ctx = canvas.getContext('2d');
-
-			// Destroy previous chart instance if exists
-			if (activityChartInstance) {
-				activityChartInstance.destroy();
-			}
-
-			// Prepare chart data
-			const labels = data.map(d => {
-				// Format date nicely (DD/MM)
-				const parts = d.date.split('-');
-				return `${parts[2]}/${parts[1]}`;
-			});
-
-			const completedData = data.map(d => d.completed);
-			const partialData = data.map(d => d.partial);
-			const pendingData = data.map(d => d.pending);
-
-			// Create chart
-			activityChartInstance = new Chart(ctx, {
-				type: 'bar', // Changed from 'line' to 'bar'
-				data: {
-					labels: labels,
-					datasets: [
-						{
-							label: '✅ Concluídos',
-							data: completedData,
-							backgroundColor: '#4CAF50',
-							borderColor: '#2e7d32',
-							borderWidth: 1
-						},
-						{
-							label: '🟠 Parciais',
-							data: partialData,
-							backgroundColor: '#ff9800',
-							borderColor: '#ef6c00',
-							borderWidth: 1
-						},
-						{
-							label: '⏳ Pendentes',
-							data: pendingData,
-							backgroundColor: '#f44336',
-							borderColor: '#c62828',
-							borderWidth: 1
-						}
-					]
-				},
-				options: {
-					responsive: true,
-					maintainAspectRatio: false,
-					plugins: {
-						title: {
-							display: true,
-							text: 'Evolução das Atividades por Dia',
-							font: {
-								size: 16
-							}
-						},
-						legend: {
-							display: true,
-							position: 'top'
-						},
-						tooltip: {
-							mode: 'index',
-							intersect: false,
-							callbacks: {
-								label: function (context) {
-									let label = context.dataset.label || '';
-									if (label) {
-										label += ': ';
-									}
-									label += context.parsed.y + ' atividades';
-									return label;
-								}
-							}
-						}
-					},
-					scales: {
-						y: {
-							beginAtZero: true,
-							ticks: {
-								stepSize: 10
-							},
-							title: {
-								display: true,
-								text: 'Quantidade de Atividades'
-							}
-						},
-						x: {
-							title: {
-								display: true,
-								text: 'Data (Dia/Mês)'
-							}
-						}
-					}
-				}
-			});
-		}
-
-		function closeChartModal() {
-			const modal = document.getElementById('chartModal');
-			modal.style.display = 'none';
-
-			// Cleanup chart
-			if (activityChartInstance) {
-				activityChartInstance.destroy();
-				activityChartInstance = null;
-			}
-		}
-
-		// Wire up chart button click
-		document.getElementById('btnChart').addEventListener('click', openChartModal);
-
-		// ===== EXCEL EXPORT FUNCTIONALITY =====
-
-		function exportCurrentDataToExcel() {
-			if (!allPlacemarksData || allPlacemarksData.length === 0) {
-				alert('⚠️ Nenhum dado disponível para exportar.');
-				return;
-			}
-
-			// Prepare data for export
-			const exportData = [];
-
-			allPlacemarksData.forEach(item => {
-				const activityData = getActivityData(item.lat, item.lng);
-
-				// Determine status
-				let status = 'Pendente';
-				if (activityData?.status === 'done') status = 'Concluído';
-				else if (activityData?.status === 'partial') status = 'Parcial';
-
-				// Format date
-				let completedDate = '';
-				if (activityData?.completedAt) {
-					if (activityData.completedAt.seconds) {
-						completedDate = new Date(activityData.completedAt.seconds * 1000).toLocaleString('pt-BR');
-					} else if (activityData.completedAt instanceof Date) {
-						completedDate = activityData.completedAt.toLocaleString('pt-BR');
-					}
-				}
-
-				const row = {
-					'Grupo': item.group,
-					'Nome': item.name,
-					'Latitude': item.lat.toFixed(6),
-					'Longitude': item.lng.toFixed(6),
-					'Status': status,
-					'Atividades Disponíveis (Admin)': activityData?.selectedActivities?.join(', ') || '',
-					'Checkboxes Marcados pelo Usuário': activityData?.completedItems?.join(', ') || '',
-					'Observações Admin': activityData?.text || '',
-					'Observações do Usuário': activityData?.userNote || '',
-					'Concluído Por': activityData?.completedBy || '',
-					'Data/Hora de Conclusão': completedDate,
-					'Total de Itens': activityData?.selectedActivities?.length || 0,
-					'Itens Concluídos': activityData?.completedItems?.length || 0,
-					'Progresso': activityData?.selectedActivities?.length > 0
-						? `${activityData.completedItems?.length || 0}/${activityData.selectedActivities.length}`
-						: '0/0'
-				};
-				exportData.push(row);
-			});
-
-			// Create workbook
-			const wb = XLSX.utils.book_new();
-			const ws = XLSX.utils.json_to_sheet(exportData);
-
-			// Auto-size columns
-			const maxWidth = 50;
-			const wscols = Object.keys(exportData[0] || {}).map(() => ({ wch: maxWidth }));
-			ws['!cols'] = wscols;
-
-			XLSX.utils.book_append_sheet(wb, ws, 'Dados Atuais');
-
-			// Generate filename with current date
-			const today = new Date().toISOString().split('T')[0];
-			const filename = `Mapa_PG_G2_${today}.xlsx`;
-
-			// Download
-			XLSX.writeFile(wb, filename);
-			alert(`✅ Dados exportados com sucesso!\n\nArquivo: ${filename}`);
-		}
-
-		function exportHistoricalDataToExcel() {
-			if (!db) {
-				alert('⚠️ Firestore não conectado. Não é possível exportar histórico.');
-				return;
-			}
-
-			alert('📦 Buscando dados históricos...');
-
-			db.collection('activities_history')
-				.orderBy('date', 'asc')
-				.get()
-				.then(snapshot => {
-					if (snapshot.empty) {
-						alert('⚠️ Nenhum dado histórico encontrado.');
-						return;
-					}
-
-					const wb = XLSX.utils.book_new();
-
-					// Create summary sheet
-					const summaryData = [];
-					snapshot.forEach(doc => {
-						const data = doc.data();
-						summaryData.push({
-							'Data': doc.id,
-							'Total': data.statistics?.total || 0,
-							'Concluídos': data.statistics?.completed || 0,
-							'Parciais': data.statistics?.partial || 0,
-							'Pendentes': data.statistics?.pending || 0,
-							'% Conclusão': data.statistics?.total > 0 ? ((data.statistics.completed / data.statistics.total) * 100).toFixed(1) + '%' : '0%'
-						});
-					});
-
-					const wsSummary = XLSX.utils.json_to_sheet(summaryData);
-					XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
-
-					// Create detailed sheets for each date
-					snapshot.forEach(doc => {
-						const data = doc.data();
-						const date = doc.id;
-						const activities = [];
-
-						// Convert activities object to array
-						for (const key in data.activities) {
-							const activity = data.activities[key];
-
-							// Determine status
-							let status = 'Pendente';
-							if (activity.status === 'done') status = 'Concluído';
-							else if (activity.status === 'partial') status = 'Parcial';
-
-							// Format date
-							let completedDate = '';
-							if (activity.completedAt) {
-								if (activity.completedAt.seconds) {
-									completedDate = new Date(activity.completedAt.seconds * 1000).toLocaleString('pt-BR');
-								} else if (activity.completedAt instanceof Date) {
-									completedDate = activity.completedAt.toLocaleString('pt-BR');
-								}
-							}
-
-							activities.push({
-								'Chave': key,
-								'Status': status,
-								'Atividades Disponíveis (Admin)': activity.selectedActivities?.join(', ') || '',
-								'Checkboxes Marcados pelo Usuário': activity.completedItems?.join(', ') || '',
-								'Observações Admin': activity.text || '',
-								'Observações do Usuário': activity.userNote || '',
-								'Concluído Por': activity.completedBy || '',
-								'Data/Hora de Conclusão': completedDate,
-								'Total de Itens': activity.selectedActivities?.length || 0,
-								'Itens Concluídos': activity.completedItems?.length || 0,
-								'Progresso': activity.selectedActivities?.length > 0
-									? `${activity.completedItems?.length || 0}/${activity.selectedActivities.length}`
-									: '0/0'
-							});
-						}
-
-						if (activities.length > 0) {
-							const ws = XLSX.utils.json_to_sheet(activities);
-							// Sheet name limited to 31 characters
-							const sheetName = date.substring(0, 31);
-							XLSX.utils.book_append_sheet(wb, ws, sheetName);
-						}
-					});
-
-					// Generate filename
-					const filename = `Historico_Mapa_PG_G2_Completo.xlsx`;
-
-					// Download
-					XLSX.writeFile(wb, filename);
-					alert(`✅ Histórico exportado com sucesso!\n\nArquivo: ${filename}\n\nContém ${snapshot.size} dias de dados.`);
-				})
-				.catch(err => {
-					console.error('Error exporting historical data:', err);
-					alert(`❌ Erro ao exportar histórico:\n${err.message}`);
-				});
-		}
-
-		function showExportOptions() {
-			const choice = confirm(
-				'📥 EXPORTAR PARA EXCEL\n\n' +
-				'Escolha uma opção:\n\n' +
-				'OK = Dados Atuais (hoje)\n' +
-				'CANCELAR = Histórico Completo (todos os dias)'
-			);
-
-			if (choice) {
-				exportCurrentDataToExcel();
-			} else {
-				exportHistoricalDataToExcel();
-			}
-		}
-
-		// Wire up export button
-		document.getElementById('btnExport').addEventListener('click', showExportOptions);
-
-		// ===== MOBILE HAMBURGER MENU LOGIC =====
-
-		function toggleMobileMenu() {
-			const sidebar = document.getElementById('mobileSidebar');
-			const overlay = document.getElementById('mobileOverlay');
-
-			if (sidebar.classList.contains('open')) {
-				sidebar.classList.remove('open');
-				overlay.style.display = 'none';
-			} else {
-				sidebar.classList.add('open');
-				overlay.style.display = 'block';
-				populateMobileMenu();
-			}
-		}
-
-		function populateMobileMenu() {
-			const menuContent = document.getElementById('mobileMenuContent');
-
-			let html = '';
-
-			// User email
-			if (currentUser) {
-				html += `<div style="padding: 10px; background: #f5f5f5; border-radius: 8px; margin-bottom: 15px;">
-				<div style="font-size: 12px; color: #666;">Logado como:</div>
-				<div style="font-weight: bold; color: #2e7d32;">${currentUser.email}</div>
-			</div>`;
-			}
-
-			// Timer
-			const timerDisplay = document.getElementById('timerDisplay');
-			if (timerDisplay && timerDisplay.textContent !== '--:--:--') {
-				html += `<div style="padding: 15px; background: #fff3e0; border-radius: 8px; margin-bottom: 15px; text-align: center;">
-				<div style="font-size: 12px; color: #666;">⏱️ Tempo até Reset:</div>
-				<div style="font-size: 24px; font-weight: bold; color: ${timerDisplay.style.color}; font-family: monospace;">
-					${timerDisplay.textContent}
-				</div>
-			</div>`;
-			}
-
-			// Dashboard Stats (if available)
-			const statsContent = document.getElementById('statsContent');
-			if (statsContent && statsContent.innerHTML) {
-				html += `<div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #2196F3;">
-				<h4 style="margin: 0 0 10px 0; border-bottom: 2px solid #2196F3; padding-bottom: 5px; color: #333;">📊 Dashboard Geral</h4>
-				<div id="mobileStatsPlaceholder"></div>
-			</div>`;
-			}
-
-			// Layer Controls (if map exists)
-			if (typeof map !== 'undefined' && map) {
-				html += `<div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #4CAF50;">
-				<h4 style="margin: 0 0 10px 0; color: #333;">🗺️ Camadas do Mapa</h4>
-				<div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-					<button onclick="window.toggleAllLayers(true); populateMobileMenu();" 
-						style="flex: 1; padding: 8px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; font-size: 12px; font-weight: 600;">
-						✓ Marcar Todos
-					</button>
-					<button onclick="window.toggleAllLayers(false); populateMobileMenu();" 
-						style="flex: 1; padding: 8px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">
-						✗ Desmarcar Todos
-					</button>
-				</div>
-				<div id="mobileLayersList" style="max-height: 300px; overflow-y: auto; background: white; padding: 10px; border-radius: 4px;">
-					<!-- Populated below -->
-				</div>
-			</div>`;
-			}
-
-			// Admin toggle
-			html += `<div style="padding: 15px; background: #f5f5f5; border-radius: 8px; margin-bottom: 15px;">
-			<label style="display: flex; align-items: center; cursor: pointer;">
-				<input type="checkbox" id="mobileAdminToggle" ${isAdmin ? 'checked' : ''} 
-					onchange="document.getElementById('adminToggle').checked = this.checked; document.getElementById('adminToggle').dispatchEvent(new Event('change'));">
-				<span style="margin-left: 10px; font-weight: 600;">🔧 Modo Admin</span>
-			</label>
-		</div>`;
-
-			// Admin buttons (if admin completo)
-			if (isAdmin) {
-				html += `<div style="margin-bottom: 15px;">
-				<button onclick="document.getElementById('btnConfig').click(); toggleMobileMenu();" 
-					style="width: 100%; padding: 12px; margin-bottom: 8px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-					⚙️ Configurações
-				</button>
-				<button onclick="document.getElementById('btnUsers').click(); toggleMobileMenu();" 
-					style="width: 100%; padding: 12px; margin-bottom: 8px; background: #FF9800; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-					👥 Usuários
-				</button>
-				<button onclick="document.getElementById('btnExport').click(); toggleMobileMenu();" 
-					style="width: 100%; padding: 12px; margin-bottom: 8px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-					📥 Exportar Excel
-				</button>
-				<button onclick="document.getElementById('btnActivities').click(); toggleMobileMenu();" 
-					style="width: 100%; padding: 12px; margin-bottom: 8px; background: #9C27B0; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-					📋 Tipos de Atividade
-				</button>
-				<button onclick="document.getElementById('btnChart').click(); toggleMobileMenu();" 
-					style="width: 100%; padding: 12px; margin-bottom: 8px; background: #00BCD4; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-					📊 Gráfico
-				</button>
-				<button onclick="document.getElementById('btnUploadKML').click(); toggleMobileMenu();" 
-					style="width: 100%; padding: 12px; margin-bottom: 8px; background: #673AB7; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-					📂 Upload KML
-				</button>
-			</div>`;
-			}
-			// Perfil INFRACMPC - Apenas Gráfico e Exportação
-			else if (userProfile === 'infracmpc') {
-				html += `<div style="margin-bottom: 15px;">
-				<button onclick="document.getElementById('btnExport').click(); toggleMobileMenu();" 
-					style="width: 100%; padding: 12px; margin-bottom: 8px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-					📥 Exportar Excel
-				</button>
-				<button onclick="document.getElementById('btnChart').click(); toggleMobileMenu();" 
-					style="width: 100%; padding: 12px; margin-bottom: 8px; background: #00BCD4; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-					📊 Gráfico
-				</button>
-			</div>`;
-			}
-
-			// Logout button
-			html += `<button onclick="performLogout()" 
-			style="width: 100%; padding: 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-			Sair
-		</button>`;
-
-			menuContent.innerHTML = html;
-
-			// Inject stats content after rendering (to avoid HTML escaping)
-			if (statsContent && statsContent.innerHTML) {
-				const placeholder = document.getElementById('mobileStatsPlaceholder');
-				if (placeholder) {
-					placeholder.innerHTML = statsContent.innerHTML;
-				}
-			}
-
-			// Populate layers dynamically (if map exists)
-			if (typeof map !== 'undefined' && map && typeof window.overlayMaps !== 'undefined') {
-				const layersList = document.getElementById('mobileLayersList');
-				if (layersList) {
-					let layersHTML = '';
-					for (const layerName in window.overlayMaps) {
-						const layer = window.overlayMaps[layerName];
-						const isChecked = map.hasLayer(layer);
-						layersHTML += `<label style="display: block; padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;">
-						<input type="checkbox" ${isChecked ? 'checked' : ''} 
-							onchange="if(this.checked) { map.addLayer(window.overlayMaps['${layerName}']); } else { map.removeLayer(window.overlayMaps['${layerName}']); } if(typeof updateStats === 'function') updateStats();">
-						<span style="margin-left: 8px;">${layerName}</span>
-					</label>`;
-					}
-					layersList.innerHTML = layersHTML;
-				}
-			}
-		}
-
-	</script>
+                    <div class="stat-card" style="min-width: 150px;">
+                        <div class="stat-label">Progresso Soldas</div>
+                        <div class="stat-value progress" id="clusterProgress">0%</div>
+                    </div>
+                </div>
+
+                <div id="weldClustersContainer" class="weld-clusters-grid">
+                    <!-- Clusters will be generated here -->
+                </div>
+
+                <div class="scurve-legend" style="margin-top: 1.5rem;">
+                    <div class="legend-item">
+                        <span class="legend-color"
+                            style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);"></span>
+                        <span class="legend-label">Pendente</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color"
+                            style="background: var(--success); box-shadow: 0 0 10px var(--success);"></span>
+                        <span class="legend-label">Concluído</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer User Section -->
+        <div class="user-section footer-user">
+            <div id="userDisplay" class="user-email"></div>
+            <div class="user-actions">
+                <span style="font-size: 0.7rem; opacity: 0.5; margin-right: 1rem;">Version 4.0.0</span>
+                <button id="adminBtn" class="btn-admin" onclick="openAdminPanel()" style="display: none;">👤
+                    Admin</button>
+                <button id="logoutBtn" class="btn-logout" onclick="handleLogout()">🚪 Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-logo">🏭</div>
+                <h2 id="modalTitle">Bem-vindo!</h2>
+                <p id="modalSubtitle">Faça login para sincronizar seus dados</p>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="emailInput">📧 Email</label>
+                    <input type="email" id="emailInput" placeholder="seu@email.com" autocomplete="email">
+                </div>
+                <div class="input-group">
+                    <label for="passwordInput">🔒 Senha</label>
+                    <input type="password" id="passwordInput" placeholder="********" autocomplete="current-password">
+                </div>
+                <div id="errorMessage" class="error-message"></div>
+                <div class="modal-actions">
+                    <button id="loginBtn" class="btn-primary" onclick="handleLogin()">Entrar</button>
+                    <button id="registerBtn" class="btn-secondary" onclick="handleRegister()">Criar Conta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-logo">👤</div>
+                <h2>Painel de Administração</h2>
+                <p>Aprovar ou rejeitar novos usuários</p>
+            </div>
+            <div class="modal-body">
+                <div id="pendingUsersList" class="pending-users-list">
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        Carregando...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeAdminPanel()" class="btn-secondary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Control Modal (List View) -->
+    <div id="securityModal" class="modal">
+        <div class="modal-content" style="max-width: 98vw; width: 98vw; padding: 1.5rem;">
+            <div class="modal-header">
+                <h2>🛡️ Controle de Segurança</h2>
+                <button class="modal-close" onclick="closeSecurityModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="section-actions security-actions"
+                    style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                    <button class="btn-control btn-security-action" onclick="openSecurityFormModal()"
+                        style="background: #10b981; color: white;">🛡️ Novo Registro</button>
+
+                    <label for="securityExcelInput" class="btn-control btn-security-action"
+                        style="background: #6366f1; color: white; cursor: pointer; margin-bottom: 0;">
+                        📊 Importar Excel
+                    </label>
+                    <input type="file" id="securityExcelInput" accept=".xlsx, .xls" style="display: none;"
+                        onchange="handleSecurityExcelUpload(event)">
+
+                    <button class="btn-control btn-security-action" onclick="clearSecurityData()"
+                        style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
+                </div>
+                <div class="security-table-wrapper">
+                    <table class="security-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Atividade</th>
+                                <th>TH</th>
+                                <th>Prazo</th>
+                                <th>Turno</th>
+                                <th>Contratado/Substituído</th>
+                                <th>Solicitante</th>
+                                <th>Responsável</th>
+                                <th>Observação</th>
+                                <th style="text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="securityTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Form Modal (Add/Edit) -->
+    <div id="securityFormModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="securityFormTitle">🛡️ Novo Registro de Segurança</h2>
+                <button class="modal-close" onclick="closeSecurityFormModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="securityEditId">
+                <div class="manual-form">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Atividade</label>
+                            <input type="text" id="secAtividade" class="filter-input"
+                                placeholder="Descrição da atividade">
+                        </div>
+                        <div class="form-group">
+                            <label>TH</label>
+                            <select id="secTH" class="filter-select">
+                                <option value="SIM">SIM</option>
+                                <option value="NÃO">NÃO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Turno</label>
+                            <select id="secTurno" class="filter-select">
+                                <option value="M">M</option>
+                                <option value="T">T</option>
+                                <option value="N">N</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Prazo (Data e Hora)</label>
+                            <input type="datetime-local" id="secPrazo" class="filter-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Contratado/Substituído</label>
+                            <input type="text" id="secContratado" class="filter-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Solicitante</label>
+                            <input type="text" id="secSolicitante" class="filter-input">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Responsável</label>
+                            <input type="text" id="secResponsavel" class="filter-input">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Observação</label>
+                            <textarea id="secObservacao" class="filter-input" style="min-height: 80px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-control" style="background: var(--success); color: white; flex: 1;"
+                            onclick="saveSecurityRecord()">💾 Salvar</button>
+                        <button class="btn-control" style="background: var(--danger); color: white; flex: 1;"
+                            onclick="closeSecurityFormModal()">❌ Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js?v=5"></script>
+    <script src="script.js?v=5"></script>
+    <script src="migration.js?v=5"></script>
 </body>
 
 </html>
