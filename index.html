@@ -15,7 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style_final.css?v=23">
+    <link rel="stylesheet" href="style_final.css?v=24">
 </head>
 
 <body>
@@ -38,9 +38,36 @@
                 </button>
             </div>
 
-            <button onclick="logout()" class="btn-mm-logout">
-                Sair
-            </button>
+            <div
+                style="display: flex; gap: 1rem; align-items: center; justify-content: center; width: 100%; margin-top: 1rem;">
+                <button onclick="logout()" class="btn-mm-logout">
+                    Sair
+                </button>
+                <button onclick="openAboutModal()"
+                    style="width: 45px; height: 45px; flex-shrink: 0; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-weight: bold; font-size: 1.2rem; padding: 0;">
+                    !
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: center;">
+                <h2>Sobre o App</h2>
+            </div>
+            <div class="modal-body" style="padding: 2rem 1rem;">
+                <p style="margin-bottom: 1.5rem; color: #cbd5e1;">Desenvolvimento</p>
+                <h3 style="color: white; margin-bottom: 2rem; font-size: 1.3rem;">Luciano Engel</h3>
+
+                <p style="margin-bottom: 1.5rem; color: #cbd5e1;">Idealizador</p>
+                <h3 style="color: white; margin-bottom: 1rem; font-size: 1.3rem;">Rodrigo Toledo</h3>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button onclick="closeAboutModal()" class="btn-primary"
+                    style="width: auto; padding: 0.8rem 2rem;">Fechar</button>
+            </div>
         </div>
     </div>
 
@@ -561,7 +588,7 @@
     </div>
 
     <script src="firebase-config.js?v=21"></script>
-    <script src="script.js?v=21"></script>
+    <script src="script.js?v=25"></script>
     <script src="migration.js?v=21"></script>
 </body>
 
