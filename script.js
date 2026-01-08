@@ -1301,16 +1301,34 @@ function openSecurityModal() {
     renderSecurityList();
 }
 
-function closeSecurityModal() {
-    document.getElementById('securityModal').classList.remove('show');
-}
+
 
 function openSecurityFormModal(id = null) {
     if (prompt('Senha admin:') !== '789512') return;
 
     document.getElementById('securityFormModal').classList.add('show');
-    const form = document.querySelector('#securityFormModal .manual-form');
     document.getElementById('securityEditId').value = id || '';
+
+    // Generate dynamic day inputs (Previsto/Real)
+    const grid = document.getElementById('securityDaysGrid');
+    if (grid) {
+        grid.innerHTML = '';
+        activeSecurityDays.forEach(i => {
+            grid.innerHTML += `
+                <div style="display: flex; flex-direction: column; align-items: center; border: 1px solid #bfdbfe; padding: 4px; border-radius: 6px; background: #fff;">
+                    <span style="font-size: 0.9rem; font-weight: 800; color: #1e3a8a; margin-bottom: 3px;">Dia ${i}</span>
+                    <div style="display: flex; gap: 4px;">
+                        <input type="text" id="secDay${i}_P" placeholder="P" class="day-input" 
+                            style="width: 45px; text-align: center; border: 1px solid #93c5fd; font-size: 0.9rem; font-weight: 600; background: #eff6ff; color: #1e40af; border-radius: 4px; padding: 2px;" 
+                            title="Previsto (%)" oninput="formatPercentInput(this)" onblur="blurPercentInput(this)" onfocus="focusPercentInput(this)">
+                        <input type="text" id="secDay${i}_R" placeholder="R" class="day-input" 
+                            style="width: 45px; text-align: center; border: 1px solid #86efac; font-size: 0.9rem; font-weight: 600; background: #f0fdf4; color: #166534; border-radius: 4px; padding: 2px;" 
+                            title="Realizado (%)" oninput="formatPercentInput(this)" onblur="blurPercentInput(this)" onfocus="focusPercentInput(this)">
+                    </div>
+                </div>
+            `;
+        });
+    }
 
     if (id) {
         document.getElementById('securityFormTitle').textContent = '🛡️ Editar Registro de Segurança';
@@ -1319,15 +1337,25 @@ function openSecurityFormModal(id = null) {
             document.getElementById('secAtividade').value = record.atividade || '';
             document.getElementById('secTH').value = record.th || 'SIM';
             document.getElementById('secTurno').value = record.turno || 'M';
-            document.getElementById('secPrazo').value = record.prazo || '';
             document.getElementById('secContratado').value = record.contratado || '';
             document.getElementById('secSolicitante').value = record.solicitante || '';
             document.getElementById('secResponsavel').value = record.responsavel || '';
             document.getElementById('secObservacao').value = record.observacao || '';
+
+            // Populate days (P and R)
+            activeSecurityDays.forEach(i => {
+                const elP = document.getElementById(`secDay${i}_P`);
+                const elR = document.getElementById(`secDay${i}_R`);
+                if (elP) elP.value = record[`day${i}_P`] || '';
+                if (elR) elR.value = record[`day${i}_R`] || '';
+            });
         }
     } else {
         document.getElementById('securityFormTitle').textContent = '🛡️ Novo Registro de Segurança';
-        document.querySelectorAll('#securityFormModal input, #securityFormModal textarea').forEach(i => i.value = '');
+        // Clear main inputs
+        const mainInputs = ['secAtividade', 'secContratado', 'secSolicitante', 'secResponsavel', 'secObservacao'];
+        mainInputs.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
         document.getElementById('secTH').value = 'SIM';
         document.getElementById('secTurno').value = 'M';
     }
@@ -1343,12 +1371,19 @@ function saveSecurityRecord() {
         atividade: document.getElementById('secAtividade').value,
         th: document.getElementById('secTH').value,
         turno: document.getElementById('secTurno').value,
-        prazo: document.getElementById('secPrazo').value,
         contratado: document.getElementById('secContratado').value,
         solicitante: document.getElementById('secSolicitante').value,
         responsavel: document.getElementById('secResponsavel').value,
         observacao: document.getElementById('secObservacao').value,
     };
+
+    // Collect days 1-31 (Previsto and Real)
+    for (let i = 1; i <= 31; i++) {
+        const valP = document.getElementById(`secDay${i}_P`)?.value;
+        const valR = document.getElementById(`secDay${i}_R`)?.value;
+        if (valP) record[`day${i}_P`] = valP;
+        if (valR) record[`day${i}_R`] = valR;
+    }
 
     if (editId) {
         const index = securityRecords.findIndex(r => r.id == editId);
@@ -1378,7 +1413,9 @@ function deleteSecurityRecord(id) {
 }
 
 function clearSecurityData() {
-    if (prompt('Senha admin para LIMPAR TUDO:') !== '789512') {
+    const pw = prompt('Senha admin para LIMPAR TUDO:');
+    if (pw !== '789512') {
+        if (pw !== null) alert("❌ Senha incorreta!");
         return;
     }
 
@@ -1394,17 +1431,33 @@ function renderSecurityList() {
     const tbody = document.getElementById('securityTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = securityRecords.map(r => `
+    tbody.innerHTML = securityRecords.map(r => {
+        // Generate day cells (Previsto and Real)
+        let dayCells = '';
+        activeSecurityDays.forEach(i => {
+            let valP = r[`day${i}_P`] || '';
+            let valR = r[`day${i}_R`] || '';
+            // Ensure value has % if it's a number
+            if (valP && !String(valP).includes('%')) valP += '%';
+            if (valR && !String(valR).includes('%')) valR += '%';
+
+            dayCells += `
+                <td class="day-cell sub-cell-p" style="min-width: 40px; text-align: center; border-left: 1px solid #ddd; background: #f0f9ff; color: #0c4a6e !important; font-weight: bold;">${valP}</td>
+                <td class="day-cell sub-cell-r" style="min-width: 40px; text-align: center; border-left: 1px solid #eee; background: #f0fdf4; color: #14532d !important; font-weight: bold;">${valR}</td>
+            `;
+        });
+
+        return `
         <tr>
-            <td data-label="ID"><strong>#${r.id}</strong></td>
+            <td data-label="ID"><strong>${r.id}</strong></td>
             <td data-label="Atividade">${r.atividade || '-'}</td>
             <td data-label="TH"><span class="badge" style="background: ${r.th === 'SIM' ? 'var(--danger)' : 'var(--success)'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${r.th}</span></td>
-            <td data-label="Prazo">${r.prazo ? new Date(r.prazo).toLocaleString() : '-'}</td>
             <td data-label="Turno">${r.turno || '-'}</td>
             <td data-label="Contratado/Substituído">${r.contratado || '-'}</td>
             <td data-label="Solicitante">${r.solicitante || '-'}</td>
             <td data-label="Responsável">${r.responsavel || '-'}</td>
             <td data-label="Observação"><div style="max-height: 50px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;">${r.observacao || '-'}</div></td>
+            ${dayCells}
             <td data-label="Ações" style="text-align: center;">
                 <div style="display: flex; gap: 0.3rem; justify-content: center;">
                     <button class="btn-control edit" onclick="openSecurityFormModal(${r.id})" style="background: var(--warning); padding: 5px; height: 30px; width: 30px;">✏️</button>
@@ -1412,7 +1465,7 @@ function renderSecurityList() {
                 </div>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function handleSecurityExcelUpload(event) {
@@ -1446,17 +1499,29 @@ function handleSecurityExcelUpload(event) {
                 let thFinal = 'NÃO';
                 if (thVal.includes('S') || thVal.includes('SIM')) thFinal = 'SIM';
 
-                return {
+                const record = {
                     id: nextId++,
-                    atividade: getVal(['Atividade', 'ATIVIDADE', 'Tarefa', 'Tarefa']),
+                    atividade: getVal(['Atividade', 'ATIVIDADE', 'Tarefa', 'Tarefa', 'DESCRIÇÃO']),
                     th: thFinal,
-                    prazo: getVal(['PRAZO', 'Data', 'Vencimento']),
                     turno: getVal(['TURNO', 'Turno']) || 'M',
-                    contratado: getVal(['Contratado/Substituído', 'CONTRATADO/SUBSTITUÍDO', 'Contratado']),
+                    contratado: getVal(['Contratado/Substituído', 'CONTRATADO/SUBSTITUÍDO', 'Contratado', 'Substituído', 'Substituto', 'Nome', 'Funcionário']),
                     solicitante: getVal(['Solicitante', 'SOLICITANTE']),
                     responsavel: getVal(['Responsável', 'RESPONSÁVEL']),
                     observacao: getVal(['Observação', 'OBSERVAÇÃO', 'Obs'])
                 };
+
+                // Import days 1-31 (Previsto and Real)
+                for (let i = 1; i <= 31; i++) {
+                    // Try to find Previsto (P)
+                    const valP = getVal([`${i} Previsto`, `${i} P`, `${i}P`, `${i}Previsto`]);
+                    if (valP !== undefined && valP !== '') record[`day${i}_P`] = valP;
+
+                    // Try to find Real (R)
+                    const valR = getVal([`${i} Real`, `${i} R`, `${i}R`, `${i}Real`]);
+                    if (valR !== undefined && valR !== '') record[`day${i}_R`] = valR;
+                }
+
+                return record;
             }).filter(r => r.atividade && r.atividade !== 'GERAL' && r.atividade !== 'FORNALHA BAIXA');
 
             securityRecords = [...securityRecords, ...imported];
@@ -1470,4 +1535,253 @@ function handleSecurityExcelUpload(event) {
     };
     reader.readAsArrayBuffer(file);
     event.target.value = ''; // Reset input
+}
+
+function downloadSecurityTemplate() {
+    try {
+        const templateData = [{
+            "Atividade": "Exemplo de Atividade",
+            "TH": "SIM",
+            "Turno": "M",
+            "Contratado/Substituído": "Nome",
+            "Solicitante": "Nome",
+            "Responsável": "Nome",
+            "Observação": "Obs"
+        }];
+
+        // Add days 1-31 with Previsto and Real
+        for (let i = 1; i <= 31; i++) {
+            templateData[0][`${i} Previsto`] = "";
+            templateData[0][`${i} Real`] = "";
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(templateData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Modelo Segurança");
+
+        // Set widths
+        const wscols = [
+            { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 30 }
+        ];
+        // Add widths for days (2 per day)
+        for (let i = 1; i <= 31; i++) {
+            wscols.push({ wch: 10 }); // Previsto
+            wscols.push({ wch: 10 }); // Real
+        }
+        worksheet['!cols'] = wscols;
+
+        console.log("Gerando arquivo Excel...");
+        XLSX.writeFile(workbook, "Modelo_Importacao_Seguranca.xlsx");
+        console.log("Template gerado.");
+    } catch (e) {
+        console.error("Erro template:", e);
+        alert("Erro: " + e.message);
+    }
+}
+// --- Dynamic Day Configuration ---
+let activeSecurityDays = Array.from({ length: 31 }, (_, i) => i + 1); // Default 1-31
+
+async function loadSecurityConfig() {
+    // 1. Try LocalStorage (fast load)
+    const stored = localStorage.getItem('securityDaysConfig');
+    if (stored) {
+        try {
+            activeSecurityDays = JSON.parse(stored).map(Number).sort((a, b) => a - b);
+        } catch (e) {
+            console.error("Erro config local:", e);
+        }
+    }
+
+    // 2. Try Firestore (authoritative)
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+            const doc = await db.collection('shared_data').doc('security').get();
+            if (doc.exists && doc.data().config && doc.data().config.activeDays) {
+                activeSecurityDays = doc.data().config.activeDays.map(Number).sort((a, b) => a - b);
+                localStorage.setItem('securityDaysConfig', JSON.stringify(activeSecurityDays));
+            }
+        } catch (e) {
+            console.error("Erro config firestore:", e);
+        }
+    }
+
+    renderSecurityTableHeaders();
+}
+
+function openSecurityConfigModal() {
+    if (prompt('Senha admin:') !== '789512') return;
+
+    document.getElementById('securityDaysModal').classList.add('show');
+    const grid = document.getElementById('securityDaysConfigGrid');
+    grid.innerHTML = '';
+
+    for (let i = 1; i <= 31; i++) {
+        const checked = activeSecurityDays.includes(i) ? 'checked' : '';
+        grid.innerHTML += `
+            <label style="display: flex; flex-direction: column; align-items: center; cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: ${checked ? '#e0f2fe' : '#fff'};">
+                <span style="font-size: 0.8rem; font-weight: bold; color: #333; margin-bottom: 2px;">${i}</span>
+                <input type="checkbox" class="day-config-checkbox" value="${i}" ${checked} onclick="this.parentElement.style.background = this.checked ? '#e0f2fe' : '#fff'">
+            </label>
+        `;
+    }
+}
+
+function closeSecurityDaysModal() {
+    document.getElementById('securityDaysModal').classList.remove('show');
+}
+
+function toggleAllSecurityDays(state) {
+    document.querySelectorAll('.day-config-checkbox').forEach(cb => {
+        cb.checked = state;
+        cb.parentElement.style.background = state ? '#e0f2fe' : '#fff';
+    });
+}
+
+async function saveSecurityDays() {
+    const checkboxes = document.querySelectorAll('.day-config-checkbox:checked');
+    activeSecurityDays = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a, b) => a - b);
+
+    // Save Local
+    localStorage.setItem('securityDaysConfig', JSON.stringify(activeSecurityDays));
+
+    // Save Firestore
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+            await db.collection('shared_data').doc('security').set({
+                config: { activeDays: activeSecurityDays },
+                lastConfigUpdate: new Date().toISOString()
+            }, { merge: true });
+        } catch (e) {
+            console.error("Erro saving config firestore:", e);
+            alert("⚠️ Salvo localmente, mas erro ao salvar na nuvem: " + e.message);
+        }
+    }
+
+    renderSecurityTableHeaders();
+    renderSecurityList();
+    closeSecurityDaysModal();
+    alert('✅ Configuração salva e sincronizada!');
+}
+
+function toggleSecurityMobileMenu() {
+    const menu = document.getElementById('securityActionsMenu');
+    menu.classList.toggle('show');
+}
+
+// --- Main Menu Navigation ---
+
+function showMainMenu() {
+    // Hide login modal properly
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.classList.remove('show');
+        loginModal.style.display = 'none'; // Force hide just in case
+    }
+
+    document.getElementById('mainMenu').style.display = 'flex';
+    document.getElementById('mainDashboard').style.display = 'none';
+}
+
+function showDashboard() {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('mainDashboard').style.display = 'block';
+    renderActivities();
+    updateStats();
+}
+
+// Flag to track navigation source
+let securityOpenedFromMain = false;
+
+function openSecurityModalDirectly() {
+    securityOpenedFromMain = true; // Set flag
+    showDashboard();
+    openSecurityModal();
+}
+
+function closeSecurityModal() {
+    document.getElementById('securityModal').classList.remove('show');
+
+    // If opened from Main Menu screen, return to it when closing
+    if (securityOpenedFromMain) {
+        returnToMainMenu();
+        securityOpenedFromMain = false; // Reset flag
+    }
+}
+
+function returnToMainMenu() {
+    document.getElementById('mainDashboard').style.display = 'none';
+    document.getElementById('mainMenu').style.display = 'flex';
+}
+
+// Make logout available globally matching the onclick="logout()" calls
+window.logout = handleLogout;
+
+function renderSecurityTableHeaders() {
+    const headerRow = document.getElementById('securityHeaderRow');
+    const subHeaderRow = document.getElementById('securitySubHeaderRow');
+    // ... existing code ...
+
+    if (!headerRow || !subHeaderRow) return;
+
+    // Fixed headers HTML - First Row
+    let headerHTML = `
+        <th rowspan="2">ID</th>
+        <th rowspan="2">Atividade</th>
+        <th rowspan="2">TH</th>
+        <th rowspan="2">Turno</th>
+        <th rowspan="2">Contratado/Substituído</th>
+        <th rowspan="2">Solicitante</th>
+        <th rowspan="2">Responsável</th>
+        <th rowspan="2">Observação</th>
+    `;
+
+    // Dynamic Days Headers
+    activeSecurityDays.forEach(day => {
+        headerHTML += `<th colspan="2" class="day-col">${day}</th>`;
+    });
+
+    // Actions Header
+    headerHTML += `<th rowspan="2" style="text-align: center;">Ações</th>`;
+
+    headerRow.innerHTML = headerHTML;
+
+    // Sub-headers Row
+    let subHeaderHTML = '';
+    activeSecurityDays.forEach(() => {
+        subHeaderHTML += `<th class="sub-col col-p">P</th><th class="sub-col col-r">R</th>`;
+    });
+
+    subHeaderRow.innerHTML = subHeaderHTML;
+}
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+    loadSecurityConfig();
+});
+
+// Helper functions for percentage inputs
+function formatPercentInput(input) {
+    // Remove non-digits
+    let val = input.value.replace(/\D/g, '');
+
+    // Limit to 100
+    if (val !== '') {
+        let num = parseInt(val, 10);
+        if (num > 100) num = 100;
+        val = num.toString();
+    }
+
+    input.value = val;
+}
+
+function blurPercentInput(input) {
+    let val = input.value.replace(/\D/g, '');
+    if (val !== '') {
+        input.value = val + '%';
+    }
+}
+
+function focusPercentInput(input) {
+    let val = input.value.replace(/\D/g, '');
+    input.value = val;
 }
