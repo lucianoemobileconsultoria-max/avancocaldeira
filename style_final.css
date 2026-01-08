@@ -2462,6 +2462,13 @@ body.is-admin th.admin-only {
     box-shadow: 0 0 15px rgba(52, 211, 153, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
+.btn-mm-mks {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    /* Fluorescent Purple Glow */
+    border: 2px solid #a78bfa;
+    box-shadow: 0 0 15px rgba(167, 139, 250, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
 .btn-mm-logout {
     margin-top: 0;
     background: transparent;
