@@ -388,129 +388,188 @@
             </div>
         </div>
 
-        <!-- Security Control Modal (List View) -->
-        <div id="securityModal" class="modal">
-            <div class="modal-content" style="max-width: 98vw; width: 98vw; padding: 1.5rem;">
-                <div class="modal-header"
-                    style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <button onclick="returnToMainMenu()"
-                            style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                            ↩️ Menu
-                        </button>
-                        <h2>🛡️ Controle de Segurança</h2>
-                    </div>
-                    <!-- Close button removed as requested -->
+
+    </div> <!-- End Main Dashboard -->
+
+
+
+    <!-- MKS Control Modal (List View) - MOVED TO BODY END -->
+    <div id="mksModal" class="modal">
+        <div class="modal-content" style="max-width: 98vw; width: 98vw; padding: 1.5rem;">
+            <div class="modal-header"
+                style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button onclick="returnToMainMenu()"
+                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                        ↩️ Menu
+                    </button>
+                    <h2>🏭 MKS Control</h2>
                 </div>
-                <div class="modal-body">
-                    <div class="security-controls-container">
-                        <!-- Mobile Menu Toggle -->
-                        <button class="btn-control mobile-menu-toggle" onclick="toggleSecurityMobileMenu()"
-                            style="display: none; width: 100%; margin-bottom: 1rem; background: var(--secondary); color: white; justify-content: center;">
-                            ☰ Menu de Ações
-                        </button>
+            </div>
+            <div class="modal-body">
+                <div class="security-controls-container">
+                    <button class="btn-control mobile-menu-toggle" onclick="toggleMKSMobileMenu()"
+                        style="display: none; width: 100%; margin-bottom: 1rem; background: var(--secondary); color: white; justify-content: center;">
+                        ☰ Menu de Ações
+                    </button>
 
-                        <div class="section-actions security-actions" id="securityActionsMenu"
-                            style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                            <button class="btn-control btn-security-action" onclick="openSecurityFormModal()"
-                                style="background: #10b981; color: white;">🛡️ Novo Registro</button>
+                    <div class="section-actions security-actions" id="mksActionsMenu"
+                        style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <button class="btn-control btn-security-action" onclick="openMKSFormModal()"
+                            style="background: #10b981; color: white;">🛡️ Novo Registro</button>
 
-                            <label for="securityExcelInput" class="btn-control btn-security-action"
-                                style="background: #6366f1; color: white; cursor: pointer; margin-bottom: 0;">
-                                📊 Importar Excel
-                            </label>
-                            <input type="file" id="securityExcelInput" accept=".xlsx, .xls" style="display: none;"
-                                onchange="handleSecurityExcelUpload(event)">
+                        <label for="mksExcelInput" class="btn-control btn-security-action"
+                            style="background: #6366f1; color: white; cursor: pointer; margin-bottom: 0;">
+                            📊 Importar Excel
+                        </label>
+                        <input type="file" id="mksExcelInput" accept=".xlsx, .xls" style="display: none;"
+                            onchange="handleMKSExcelUpload(event)">
 
-                            <button class="btn-control btn-security-action" onclick="downloadSecurityTemplate()"
-                                style="background: #8b5cf6; color: white;">📑 Modelo XLS</button>
+                        <button class="btn-control btn-security-action" onclick="downloadMKSTemplate()"
+                            style="background: #8b5cf6; color: white;">📑 Modelo XLS</button>
 
-                            <button class="btn-control btn-security-action" onclick="clearSecurityData()"
-                                style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
+                        <button class="btn-control btn-security-action" onclick="clearMKSData()"
+                            style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
 
-                            <button class="btn-control btn-security-action" onclick="openSecurityDaysConfig()"
-                                style="background: #f59e0b; color: white;">⚙️ Configurar Dias</button>
-                        </div>
+                        <button class="btn-control btn-security-action" onclick="openMKSDaysConfig()"
+                            style="background: #f59e0b; color: white;">⚙️ Configurar Dias</button>
+                    </div>
 
-                        <div
-                            style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                            <table class="security-table" id="securityTable">
-                                <thead>
-                                    <tr id="securityHeaderRow"></tr>
-                                    <tr id="securitySubHeaderRow" class="subheader-row"></tr>
-                                </thead>
-                                <tbody id="securityTableBody"></tbody>
-                            </table>
-                        </div>
+                    <div
+                        style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                        <table class="security-table" id="mksTable">
+                            <thead>
+                                <tr id="mksHeaderRow"></tr>
+                                <tr id="mksSubHeaderRow" class="subheader-row"></tr>
+                            </thead>
+                            <tbody id="mksTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-
-
-        <!-- Security Form Modal (Add/Edit) -->
-        <div id="securityFormModal" class="modal">
-            <div class="modal-content" style="max-width: 600px;">
-                <div class="modal-header">
-                    <h2 id="securityFormTitle">🛡️ Novo Registro de Segurança</h2>
-                    <button class="modal-close" onclick="closeSecurityFormModal()">×</button>
+    <!-- Security Control Modal (List View) -->
+    <div id="securityModal" class="modal">
+        <div class="modal-content" style="max-width: 98vw; width: 98vw; padding: 1.5rem;">
+            <div class="modal-header"
+                style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button onclick="returnToMainMenu()"
+                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                        ↩️ Menu
+                    </button>
+                    <h2>🛡️ Controle de Segurança</h2>
                 </div>
-                <div class="modal-body">
-                    <input type="hidden" id="securityEditId">
-                    <div class="manual-form">
-                        <div class="form-grid">
-                            <div class="form-group full-width">
-                                <label>Atividade</label>
-                                <input type="text" id="secAtividade" class="filter-input"
-                                    placeholder="Descrição da atividade">
-                            </div>
-                            <div class="form-group">
-                                <label>TH</label>
-                                <select id="secTH" class="filter-select">
-                                    <option value="SIM">SIM</option>
-                                    <option value="NÃO">NÃO</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Turno</label>
-                                <select id="secTurno" class="filter-select">
-                                    <option value="M">M</option>
-                                    <option value="T">T</option>
-                                    <option value="N">N</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Contratado/Substituído</label>
-                                <input type="text" id="secContratado" class="filter-input">
-                            </div>
-                            <div class="form-group">
-                                <label>Solicitante</label>
-                                <input type="text" id="secSolicitante" class="filter-input">
-                            </div>
-                            <div class="form-group full-width">
-                                <label>Responsável</label>
-                                <input type="text" id="secResponsavel" class="filter-input">
-                            </div>
-                            <div class="form-group full-width">
-                                <label>Observação</label>
-                                <textarea id="secObservacao" class="filter-input" style="min-height: 80px;"></textarea>
-                            </div>
-                            <div class="form-group full-width">
-                                <label>Dias (1-31) - [P: Previsto / R: Real]</label>
-                                <div class="days-grid" id="securityDaysGrid"
-                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px;">
-                                    <!-- Dynamically generated by JS -->
-                                </div>
+                <!-- Close button removed as requested -->
+            </div>
+            <div class="modal-body">
+                <div class="security-controls-container">
+                    <!-- Mobile Menu Toggle -->
+                    <button class="btn-control mobile-menu-toggle" onclick="toggleSecurityMobileMenu()"
+                        style="display: none; width: 100%; margin-bottom: 1rem; background: var(--secondary); color: white; justify-content: center;">
+                        ☰ Menu de Ações
+                    </button>
+
+                    <div class="section-actions security-actions" id="securityActionsMenu"
+                        style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <button class="btn-control btn-security-action" onclick="openSecurityFormModal()"
+                            style="background: #10b981; color: white;">🛡️ Novo Registro</button>
+
+                        <label for="securityExcelInput" class="btn-control btn-security-action"
+                            style="background: #6366f1; color: white; cursor: pointer; margin-bottom: 0;">
+                            📊 Importar Excel
+                        </label>
+                        <input type="file" id="securityExcelInput" accept=".xlsx, .xls" style="display: none;"
+                            onchange="handleSecurityExcelUpload(event)">
+
+                        <button class="btn-control btn-security-action" onclick="downloadSecurityTemplate()"
+                            style="background: #8b5cf6; color: white;">📑 Modelo XLS</button>
+
+                        <button class="btn-control btn-security-action" onclick="clearSecurityData()"
+                            style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
+
+                        <button class="btn-control btn-security-action" onclick="openSecurityDaysConfig()"
+                            style="background: #f59e0b; color: white;">⚙️ Configurar Dias</button>
+                    </div>
+
+                    <div
+                        style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                        <table class="security-table" id="securityTable">
+                            <thead>
+                                <tr id="securityHeaderRow"></tr>
+                                <tr id="securitySubHeaderRow" class="subheader-row"></tr>
+                            </thead>
+                            <tbody id="securityTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Form Modal (Add/Edit) -->
+    <div id="securityFormModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="securityFormTitle">🛡️ Novo Registro de Segurança</h2>
+                <button class="modal-close" onclick="closeSecurityFormModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="securityEditId">
+                <div class="manual-form">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Atividade</label>
+                            <input type="text" id="secAtividade" class="filter-input"
+                                placeholder="Descrição da atividade">
+                        </div>
+                        <div class="form-group">
+                            <label>TH</label>
+                            <select id="secTH" class="filter-select">
+                                <option value="SIM">SIM</option>
+                                <option value="NÃO">NÃO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Turno</label>
+                            <select id="secTurno" class="filter-select">
+                                <option value="M">M</option>
+                                <option value="T">T</option>
+                                <option value="N">N</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Contratado/Substituído</label>
+                            <input type="text" id="secContratado" class="filter-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Solicitante</label>
+                            <input type="text" id="secSolicitante" class="filter-input">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Responsável</label>
+                            <input type="text" id="secResponsavel" class="filter-input">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Observação</label>
+                            <textarea id="secObservacao" class="filter-input" style="min-height: 80px;"></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Dias (1-31) - [P: Previsto / R: Real]</label>
+                            <div class="days-grid" id="securityDaysGrid"
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px;">
+                                <!-- Dynamically generated by JS -->
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn-control" style="background: var(--success); color: white; flex: 1;"
-                            onclick="saveSecurityRecord()">💾 Salvar</button>
-                        <button class="btn-control" style="background: var(--danger); color: white; flex: 1;"
-                            onclick="closeSecurityFormModal()">❌ Cancelar</button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-control" style="background: var(--success); color: white; flex: 1;"
+                        onclick="saveSecurityRecord()">💾 Salvar</button>
+                    <button class="btn-control" style="background: var(--danger); color: white; flex: 1;"
+                        onclick="closeSecurityFormModal()">❌ Cancelar</button>
                 </div>
             </div>
         </div>
@@ -581,7 +640,6 @@
             </div>
         </div>
     </div>
-    </div> <!-- End Main Dashboard -->
 
     <!-- Security Days Config Modal -->
     <div id="securityDaysModal" class="modal" style="display: none;">
@@ -664,66 +722,8 @@
             </div>
         </div>
     </div>
-
-    <!-- MKS Control Modal (List View) - MOVED TO BODY END -->
-    <div id="mksModal" class="modal">
-        <div class="modal-content" style="max-width: 98vw; width: 98vw; padding: 1.5rem;">
-            <div class="modal-header"
-                style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button onclick="returnToMainMenu()"
-                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                        ↩️ Menu
-                    </button>
-                    <h2>🏭 MKS Control</h2>
-                </div>
-            </div>
-            <div class="modal-body">
-                <div class="security-controls-container">
-                    <button class="btn-control mobile-menu-toggle" onclick="toggleMKSMobileMenu()"
-                        style="display: none; width: 100%; margin-bottom: 1rem; background: var(--secondary); color: white; justify-content: center;">
-                        ☰ Menu de Ações
-                    </button>
-
-                    <div class="section-actions security-actions" id="mksActionsMenu"
-                        style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                        <button class="btn-control btn-security-action" onclick="openMKSFormModal()"
-                            style="background: #10b981; color: white;">🛡️ Novo Registro</button>
-
-                        <label for="mksExcelInput" class="btn-control btn-security-action"
-                            style="background: #6366f1; color: white; cursor: pointer; margin-bottom: 0;">
-                            📊 Importar Excel
-                        </label>
-                        <input type="file" id="mksExcelInput" accept=".xlsx, .xls" style="display: none;"
-                            onchange="handleMKSExcelUpload(event)">
-
-                        <button class="btn-control btn-security-action" onclick="downloadMKSTemplate()"
-                            style="background: #8b5cf6; color: white;">📑 Modelo XLS</button>
-
-                        <button class="btn-control btn-security-action" onclick="clearMKSData()"
-                            style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
-
-                        <button class="btn-control btn-security-action" onclick="openMKSDaysConfig()"
-                            style="background: #f59e0b; color: white;">⚙️ Configurar Dias</button>
-                    </div>
-
-                    <div
-                        style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                        <table class="security-table" id="mksTable">
-                            <thead>
-                                <tr id="mksHeaderRow"></tr>
-                                <tr id="mksSubHeaderRow" class="subheader-row"></tr>
-                            </thead>
-                            <tbody id="mksTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="firebase-config.js?v=23"></script>
-    <script src="script.js?v=36"></script>
+    <script src="script.js?v=38"></script>
     <script src="migration.js?v=21"></script>
 </body>
 
