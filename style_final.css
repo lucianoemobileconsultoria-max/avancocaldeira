@@ -2414,6 +2414,10 @@ body.is-admin th.admin-only {
     transition: all 0.2s ease;
     text-decoration: none;
     width: 100%;
+    /* Allow text wrapping for long titles */
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
 }
 
 .btn-main-menu:hover {
@@ -2428,23 +2432,50 @@ body.is-admin th.admin-only {
 
 .btn-mm-primary {
     background: linear-gradient(135deg, #3b82f6, #2563eb);
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    /* Fluorescent Blue/Cyan Glow */
+    border: 2px solid #60a5fa;
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .btn-mm-success {
     background: linear-gradient(135deg, #10b981, #059669);
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    /* Fluorescent Green Glow */
+    border: 2px solid #34d399;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .btn-mm-logout {
-    margin-top: 1rem;
+    margin-top: 0;
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #94a3b8;
-    padding: 0.8rem 2rem;
+    padding: 0 2rem;
+    /* Remove vertical padding, use height */
+    height: 48px;
+    /* Fixed height */
     border-radius: 50px;
     font-size: 0.9rem;
-    align-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-mm-about {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding: 0;
+    flex-shrink: 0;
 }
 
 .btn-mm-logout:hover {
