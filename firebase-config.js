@@ -46,8 +46,15 @@ auth.onAuthStateChanged(async (user) => {
         await loadActivities();
 
         // Then load progress from SHARED global collection
+        // Then load progress from SHARED global collection
         loadProgressFromFirestore();
         setupRealtimeSync();
+
+        // Security Data Sync
+        if (window.loadSecurityData) await window.loadSecurityData(); // Load first
+        setTimeout(() => {
+            if (window.setupSecurityListener) window.setupSecurityListener(); // Then listen
+        }, 1500);
     } else {
         // User is signed out
         console.log('User logged out');
