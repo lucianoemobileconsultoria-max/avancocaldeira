@@ -1275,14 +1275,42 @@ async function loadSecurityData() {
     }
 }
 
+// Real-time listener for Security Data
+function setupSecurityListener() {
+    if (typeof currentUser === 'undefined' || !currentUser) return;
+
+    // Listen for Records
+    db.collection('shared_data').doc('security')
+        .onSnapshot((doc) => {
+            if (doc.exists && doc.data().records) {
+                // Determine if we need to update
+                // Simple check: compare JSON strings or timestamps
+                // For now, always update to be safe
+                securityRecords = doc.data().records;
+                renderSecurityList();
+                // Update config too if present
+                if (doc.data().config) {
+                    activeSecurityDays = doc.data().config.activeDays || [];
+                    renderSecurityTableHeaders();
+                    renderSecurityList(); // Re-render to show/hide columns
+                }
+            }
+        }, (error) => {
+            console.error("Error listening to security updates:", error);
+        });
+}
+
 async function saveSecurityData() {
+    // Optimistic update locally
     localStorage.setItem('caldeira_security', JSON.stringify(securityRecords));
+
     if (typeof currentUser !== 'undefined' && currentUser) {
         try {
             await db.collection('shared_data').doc('security').set({
                 records: securityRecords,
+                config: { activeDays: activeSecurityDays }, // Include config in save
                 lastUpdated: new Date().toISOString()
-            });
+            }, { merge: true }); // Merge to strictly update provided fields
         } catch (e) {
             console.error("Error saving security data:", e);
         }
