@@ -55,6 +55,12 @@ auth.onAuthStateChanged(async (user) => {
         setTimeout(() => {
             if (window.setupSecurityListener) window.setupSecurityListener(); // Then listen
         }, 1500);
+
+        // MKS Data Sync
+        if (window.loadMKSData) await window.loadMKSData();
+        setTimeout(() => {
+            if (window.setupMKSListener) window.setupMKSListener();
+        }, 1500);
     } else {
         // User is signed out
         console.log('User logged out');
