@@ -2270,6 +2270,12 @@ window.closeAboutModal = closeAboutModal;
 // Make logout available globally matching the onclick="logout()" calls
 window.logout = handleLogout;
 
+// Data Loading Exports (CRITICAL for firebase-config.js)
+window.loadSecurityData = loadSecurityData;
+window.setupSecurityListener = setupSecurityListener;
+window.loadMKSData = loadMKSData;
+window.setupMKSListener = setupMKSListener;
+
 function renderSecurityTableHeaders() {
     const headerRow = document.getElementById('securityHeaderRow');
     const subHeaderRow = document.getElementById('securitySubHeaderRow');
