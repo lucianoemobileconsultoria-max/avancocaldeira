@@ -7,6 +7,10 @@ let itemsPerPage = 5; // Number of records to show at once
 let sCurveChart = null; // Chart.js instance for S-Curve
 let isLoadingActivities = false; // Flag to prevent duplicate loads
 let securityRecords = []; // Tracking security records separately
+let mksRecords = []; // Tracking MKS records
+let activeMKSDays = Array.from({ length: 31 }, (_, i) => i + 1); // Tracking active days configuration for MKS
+let mksOpenedFromMain = false; // Flag for MKS navigation
+let activeSecurityDays = Array.from({ length: 31 }, (_, i) => i + 1); // Moved from bottom to here for clarity
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -1607,7 +1611,506 @@ function downloadSecurityTemplate() {
     }
 }
 // --- Dynamic Day Configuration ---
-let activeSecurityDays = Array.from({ length: 31 }, (_, i) => i + 1); // Default 1-31
+// (Variable activeSecurityDays moved to top)
+
+// ... [Existing code continues] ...
+
+// ====== MKS MODULE ======
+
+async function loadMKSData() {
+    // Try localStorage first
+    const saved = localStorage.getItem('caldeira_mks');
+    if (saved) {
+        mksRecords = JSON.parse(saved);
+        renderMKSList();
+    }
+
+    // Then Firestore if logged in
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+            const doc = await db.collection('shared_data').doc('mks').get();
+            if (doc.exists && doc.data().records) {
+                mksRecords = doc.data().records;
+                localStorage.setItem('caldeira_mks', JSON.stringify(mksRecords));
+                renderMKSList();
+            }
+        } catch (e) {
+            console.error("Error loading mks data:", e);
+        }
+    }
+}
+
+// Real-time listener for MKS Data
+function setupMKSListener() {
+    if (typeof currentUser === 'undefined' || !currentUser) return;
+
+    // Listen for Records
+    db.collection('shared_data').doc('mks')
+        .onSnapshot((doc) => {
+            if (doc.exists && doc.data().records) {
+                mksRecords = doc.data().records;
+                renderMKSList();
+                // Update config too if present
+                if (doc.data().config) {
+                    activeMKSDays = doc.data().config.activeDays || [];
+                    renderMKSTableHeaders();
+                    renderMKSList();
+                }
+            }
+        }, (error) => {
+            console.error("Error listening to mks updates:", error);
+        });
+}
+
+async function saveMKSData() {
+    // Optimistic update locally
+    localStorage.setItem('caldeira_mks', JSON.stringify(mksRecords));
+
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+            await db.collection('shared_data').doc('mks').set({
+                records: mksRecords,
+                config: { activeDays: activeMKSDays },
+                lastUpdated: new Date().toISOString()
+            }, { merge: true });
+        } catch (e) {
+            console.error("Error saving mks data:", e);
+        }
+    }
+}
+
+function openMKSModal() {
+    console.log("Opening MKS Modal...");
+    const modal = document.getElementById('mksModal');
+    if (!modal) {
+        console.error("ERRO: Elemento 'mksModal' não encontrado!");
+        alert("Erro: Janela MKS não encontrada no HTML.");
+        return;
+    }
+    modal.classList.add('show');
+    modal.style.display = 'flex'; // Force visibility
+
+    try {
+        renderMKSList();
+    } catch (e) {
+        console.error("Error rendering MKS list:", e);
+    }
+}
+
+function openMKSFormModal(id = null) {
+    if (prompt('Senha admin:') !== '789512') return;
+
+    document.getElementById('mksFormModal').classList.add('show');
+    document.getElementById('mksEditId').value = id || '';
+
+    // Generate dynamic day inputs (Previsto/Real)
+    const grid = document.getElementById('mksDaysGrid');
+    if (grid) {
+        grid.innerHTML = '';
+        activeMKSDays.forEach(i => {
+            grid.innerHTML += `
+                <div style="display: flex; flex-direction: column; align-items: center; border: 1px solid #bfdbfe; padding: 4px; border-radius: 6px; background: #fff;">
+                    <span style="font-size: 0.9rem; font-weight: 800; color: #1e3a8a; margin-bottom: 3px;">Dia ${i}</span>
+                    <div style="display: flex; gap: 4px;">
+                        <input type="text" id="mksDay${i}_P" placeholder="P" class="day-input"
+                            style="width: 45px; text-align: center; border: 1px solid #93c5fd; font-size: 0.9rem; font-weight: 600; background: #eff6ff; color: #1e40af; border-radius: 4px; padding: 2px;"
+                            title="Previsto (%)" oninput="formatPercentInput(this)" onblur="blurPercentInput(this)" onfocus="focusPercentInput(this)">
+                        <input type="text" id="mksDay${i}_R" placeholder="R" class="day-input"
+                            style="width: 45px; text-align: center; border: 1px solid #86efac; font-size: 0.9rem; font-weight: 600; background: #f0fdf4; color: #166534; border-radius: 4px; padding: 2px;"
+                            title="Realizado (%)" oninput="formatPercentInput(this)" onblur="blurPercentInput(this)" onfocus="focusPercentInput(this)">
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    if (id) {
+        document.getElementById('mksFormTitle').textContent = '🛡️ Editar Registro MKS';
+        const record = mksRecords.find(r => r.id === id);
+        if (record) {
+            document.getElementById('mksAtividade').value = record.atividade || '';
+            document.getElementById('mksTH').value = record.th || 'SIM';
+            document.getElementById('mksTurno').value = record.turno || 'M';
+            document.getElementById('mksContratado').value = record.contratado || '';
+            document.getElementById('mksSolicitante').value = record.solicitante || '';
+            document.getElementById('mksResponsavel').value = record.responsavel || '';
+            document.getElementById('mksObservacao').value = record.observacao || '';
+
+            // Populate days (P and R)
+            activeMKSDays.forEach(i => {
+                const elP = document.getElementById(`mksDay${i}_P`);
+                const elR = document.getElementById(`mksDay${i}_R`);
+                if (elP) elP.value = record[`day${i}_P`] || '';
+                if (elR) elR.value = record[`day${i}_R`] || '';
+            });
+        }
+    } else {
+        document.getElementById('mksFormTitle').textContent = '🛡️ Novo Registro MKS';
+        // Clear main inputs
+        const mainInputs = ['mksAtividade', 'mksContratado', 'mksSolicitante', 'mksResponsavel', 'mksObservacao'];
+        mainInputs.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+        document.getElementById('mksTH').value = 'SIM';
+        document.getElementById('mksTurno').value = 'M';
+    }
+}
+
+function closeMKSFormModal() {
+    document.getElementById('mksFormModal').classList.remove('show');
+}
+
+function saveMKSRecord() {
+    const editId = document.getElementById('mksEditId').value;
+    const record = {
+        atividade: document.getElementById('mksAtividade').value,
+        th: document.getElementById('mksTH').value,
+        turno: document.getElementById('mksTurno').value,
+        contratado: document.getElementById('mksContratado').value,
+        solicitante: document.getElementById('mksSolicitante').value,
+        responsavel: document.getElementById('mksResponsavel').value,
+        observacao: document.getElementById('mksObservacao').value,
+    };
+
+    // Collect days 1-31 (Previsto and Real)
+    for (let i = 1; i <= 31; i++) {
+        const valP = document.getElementById(`mksDay${i}_P`)?.value;
+        const valR = document.getElementById(`mksDay${i}_R`)?.value;
+        if (valP) record[`day${i}_P`] = valP;
+        if (valR) record[`day${i}_R`] = valR;
+    }
+
+    if (editId) {
+        const index = mksRecords.findIndex(r => r.id == editId);
+        if (index !== -1) {
+            record.id = parseInt(editId);
+            mksRecords[index] = record;
+        }
+    } else {
+        const maxId = mksRecords.reduce((max, r) => Math.max(max, r.id || 0), 0);
+        record.id = maxId + 1;
+        mksRecords.push(record);
+    }
+
+    saveMKSData();
+    renderMKSList();
+    closeMKSFormModal();
+    alert('✅ Registro salvo!');
+}
+
+function deleteMKSRecord(id) {
+    if (prompt('Senha admin:') !== '789512') return;
+    if (!confirm('Deseja excluir este registro MKS?')) return;
+
+    mksRecords = mksRecords.filter(r => r.id != id);
+    saveMKSData();
+    renderMKSList();
+}
+
+function clearMKSData() {
+    const pw = prompt('Senha admin para LIMPAR TUDO (MKS):');
+    if (pw !== '789512') {
+        if (pw !== null) alert("❌ Senha incorreta!");
+        return;
+    }
+
+    if (!confirm('ATENÇÃO: Isso apagará TODOS os registros MKS permanentemente. Confirmar?')) return;
+
+    mksRecords = [];
+    saveMKSData();
+    renderMKSList();
+    alert('✅ Todos os registros MKS foram apagados.');
+}
+
+function renderMKSList() {
+    const tbody = document.getElementById('mksTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = mksRecords.map(r => {
+        // Generate day cells (Previsto and Real)
+        let dayCells = '';
+        activeMKSDays.forEach(i => {
+            let valP = r[`day${i}_P`] || '';
+            let valR = r[`day${i}_R`] || '';
+            // Ensure value has % if it's a number
+            if (valP && !String(valP).includes('%')) valP += '%';
+            if (valR && !String(valR).includes('%')) valR += '%';
+
+            dayCells += `
+                <td class="day-cell sub-cell-p" style="min-width: 40px; text-align: center; border-left: 1px solid #ddd; background: #f0f9ff; color: #0c4a6e !important; font-weight: bold;">${valP}</td>
+                <td class="day-cell sub-cell-r" style="min-width: 40px; text-align: center; border-left: 1px solid #eee; background: #f0fdf4; color: #14532d !important; font-weight: bold;">${valR}</td>
+            `;
+        });
+
+        return `
+        <tr>
+            <td data-label="ID"><strong>${r.id}</strong></td>
+            <td data-label="Atividade">${r.atividade || '-'}</td>
+            <td data-label="TH"><span class="badge" style="background: ${r.th === 'SIM' ? 'var(--danger)' : 'var(--success)'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${r.th}</span></td>
+            <td data-label="Turno">${r.turno || '-'}</td>
+            <td data-label="Contratado/Substituído">${r.contratado || '-'}</td>
+            <td data-label="Solicitante">${r.solicitante || '-'}</td>
+            <td data-label="Responsável">${r.responsavel || '-'}</td>
+            <td data-label="Observação"><div style="max-height: 50px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;">${r.observacao || '-'}</div></td>
+            ${dayCells}
+            <td data-label="Ações" style="text-align: center;">
+                <div style="display: flex; gap: 0.3rem; justify-content: center;">
+                    <button class="btn-control edit" onclick="openMKSFormModal(${r.id})" style="background: var(--warning); padding: 5px; height: 30px; width: 30px;">✏️</button>
+                    <button class="btn-control delete" onclick="deleteMKSRecord(${r.id})" style="background: var(--danger); padding: 5px; height: 30px; width: 30px;">🗑️</button>
+                </div>
+            </td>
+        </tr>
+    `}).join('');
+}
+
+function handleMKSExcelUpload(event) {
+    if (prompt('Senha admin:') !== '789512') return;
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        try {
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            let nextId = mksRecords.reduce((max, r) => Math.max(max, r.id || 0), 0) + 1;
+            const imported = jsonData.map((row) => {
+                const getVal = (possibleKeys) => {
+                    const foundKey = Object.keys(row).find(k =>
+                        possibleKeys.some(pk => k.trim().toUpperCase() === pk.toUpperCase())
+                    );
+                    return foundKey ? row[foundKey] : '';
+                };
+
+                // Parse TH: handle S/N, SIM/NAO
+                let thVal = String(getVal(['TH', 'STATUS'])).toUpperCase();
+                let thFinal = 'NÃO';
+                if (thVal.includes('S') || thVal.includes('SIM')) thFinal = 'SIM';
+
+                const record = {
+                    id: nextId++,
+                    atividade: getVal(['Atividade', 'ATIVIDADE', 'Tarefa', 'Tarefa', 'DESCRIÇÃO']),
+                    th: thFinal,
+                    turno: getVal(['TURNO', 'Turno']) || 'M',
+                    contratado: getVal(['Contratado/Substituído', 'CONTRATADO/SUBSTITUÍDO', 'Contratado', 'Substituído', 'Substituto', 'Nome', 'Funcionário']),
+                    solicitante: getVal(['Solicitante', 'SOLICITANTE']),
+                    responsavel: getVal(['Responsável', 'RESPONSÁVEL']),
+                    observacao: getVal(['Observação', 'OBSERVAÇÃO', 'Obs'])
+                };
+
+                // Import days 1-31 (Previsto and Real)
+                for (let i = 1; i <= 31; i++) {
+                    const valP = getVal([`${i} Previsto`, `${i} P`, `${i}P`, `${i}Previsto`]);
+                    if (valP !== undefined && valP !== '') record[`day${i}_P`] = valP;
+
+                    const valR = getVal([`${i} Real`, `${i} R`, `${i}R`, `${i}Real`]);
+                    if (valR !== undefined && valR !== '') record[`day${i}_R`] = valR;
+                }
+
+                return record;
+            }).filter(r => r.atividade && r.atividade !== 'GERAL');
+
+            mksRecords = [...mksRecords, ...imported];
+            saveMKSData();
+            renderMKSList();
+            alert(`✅ ${imported.length} registros MKS importados com sucesso!`);
+        } catch (err) {
+            console.error("Error importing mks excel:", err);
+            alert("Erro ao ler arquivo Excel.");
+        }
+    };
+    reader.readAsArrayBuffer(file);
+    event.target.value = '';
+}
+
+function downloadMKSTemplate() {
+    try {
+        const templateData = [{
+            "Atividade": "Exemplo",
+            "TH": "SIM",
+            "Turno": "M",
+            "Contratado/Substituído": "Nome",
+            "Solicitante": "Nome",
+            "Responsável": "Nome",
+            "Observação": "Obs"
+        }];
+
+        for (let i = 1; i <= 31; i++) {
+            templateData[0][`${i} Previsto`] = "";
+            templateData[0][`${i} Real`] = "";
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(templateData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Modelo MKS");
+
+        const wscols = [
+            { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 30 }
+        ];
+        for (let i = 1; i <= 31; i++) {
+            wscols.push({ wch: 10 });
+            wscols.push({ wch: 10 });
+        }
+        worksheet['!cols'] = wscols;
+
+        XLSX.writeFile(workbook, "Modelo_Importacao_MKS.xlsx");
+    } catch (e) {
+        console.error("Erro template:", e);
+        alert("Erro: " + e.message);
+    }
+}
+
+// --- MKS Configuration ---
+
+async function loadMKSConfig() {
+    const stored = localStorage.getItem('mksDaysConfig');
+    if (stored) {
+        try {
+            activeMKSDays = JSON.parse(stored).map(Number).sort((a, b) => a - b);
+        } catch (e) { console.error("Erro config local:", e); }
+    }
+
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+            const doc = await db.collection('shared_data').doc('mks').get();
+            if (doc.exists && doc.data().config && doc.data().config.activeDays) {
+                activeMKSDays = doc.data().config.activeDays.map(Number).sort((a, b) => a - b);
+                localStorage.setItem('mksDaysConfig', JSON.stringify(activeMKSDays));
+            }
+        } catch (e) { console.error("Erro config firestore:", e); }
+    }
+    renderMKSTableHeaders();
+}
+
+function openMKSDaysConfig() {
+    if (prompt('Senha admin:') !== '789512') return;
+
+    document.getElementById('mksDaysModal').classList.add('show');
+    const grid = document.getElementById('mksDaysConfigGrid');
+    grid.innerHTML = '';
+
+    for (let i = 1; i <= 31; i++) {
+        const checked = activeMKSDays.includes(i) ? 'checked' : '';
+        grid.innerHTML += `
+            <label style="display: flex; flex-direction: column; align-items: center; cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: ${checked ? '#e0f2fe' : '#fff'};">
+                <span style="font-size: 0.8rem; font-weight: bold; color: #333; margin-bottom: 2px;">${i}</span>
+                <input type="checkbox" class="day-config-checkbox-mks" value="${i}" ${checked} onclick="this.parentElement.style.background = this.checked ? '#e0f2fe' : '#fff'">
+            </label>
+        `;
+    }
+}
+
+function closeMKSDaysModal() {
+    document.getElementById('mksDaysModal').classList.remove('show');
+}
+
+function toggleAllMKSDays(state) {
+    document.querySelectorAll('.day-config-checkbox-mks').forEach(cb => {
+        cb.checked = state;
+        cb.parentElement.style.background = state ? '#e0f2fe' : '#fff';
+    });
+}
+
+async function saveMKSDays() {
+    const checkboxes = document.querySelectorAll('.day-config-checkbox-mks:checked');
+    activeMKSDays = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a, b) => a - b);
+
+    localStorage.setItem('mksDaysConfig', JSON.stringify(activeMKSDays));
+
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+            await db.collection('shared_data').doc('mks').set({
+                config: { activeDays: activeMKSDays },
+                lastConfigUpdate: new Date().toISOString()
+            }, { merge: true });
+        } catch (e) {
+            console.error("Erro saving config firestore:", e);
+        }
+    }
+
+    renderMKSTableHeaders();
+    renderMKSList();
+    closeMKSDaysModal();
+    alert('✅ Configuração MKS salva!');
+}
+
+function toggleMKSMobileMenu() {
+    const menu = document.getElementById('mksActionsMenu');
+    menu.classList.toggle('show');
+}
+
+function openMKSModalDirectly() {
+    mksOpenedFromMain = true;
+
+    // Show dashboard first (safely)
+    try {
+        showDashboard();
+    } catch (e) {
+        console.error("Error showing dashboard:", e);
+    }
+
+    // Open MKS Modal with slight delay to ensure container is visible
+    setTimeout(() => {
+        openMKSModal();
+    }, 100);
+}
+
+function closeMKSModal() {
+    const modal = document.getElementById('mksModal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+    if (mksOpenedFromMain) {
+        returnToMainMenu();
+        mksOpenedFromMain = false;
+    }
+}
+
+function renderMKSTableHeaders() {
+    const headerRow = document.getElementById('mksHeaderRow');
+    const subHeaderRow = document.getElementById('mksSubHeaderRow');
+    if (!headerRow || !subHeaderRow) return;
+
+    let headerHTML = `
+        <th rowspan="2">ID</th>
+        <th rowspan="2">Atividade</th>
+        <th rowspan="2">TH</th>
+        <th rowspan="2">Turno</th>
+        <th rowspan="2">Contratado/Substituído</th>
+        <th rowspan="2">Solicitante</th>
+        <th rowspan="2">Responsável</th>
+        <th rowspan="2">Observação</th>
+    `;
+
+    activeMKSDays.forEach(day => {
+        headerHTML += `<th colspan="2" class="day-col">${day}</th>`;
+    });
+    headerHTML += `<th rowspan="2" style="text-align: center;">Ações</th>`;
+    headerRow.innerHTML = headerHTML;
+
+    let subHeaderHTML = '';
+    activeMKSDays.forEach(() => {
+        subHeaderHTML += `<th class="sub-col col-p">P</th><th class="sub-col col-r">R</th>`;
+    });
+    subHeaderRow.innerHTML = subHeaderHTML;
+}
+
+// Expose MKS functions globally
+window.openMKSModalDirectly = openMKSModalDirectly;
+window.closeMKSModal = closeMKSModal;
+window.toggleMKSMobileMenu = toggleMKSMobileMenu;
+
+// Initial Load Hook
+document.addEventListener('DOMContentLoaded', () => {
+    loadMKSConfig();
+});
+
+// End of MKS Module
+// ... [Existing code continues] ...
 
 async function loadSecurityConfig() {
     // 1. Try LocalStorage (fast load)
@@ -1739,6 +2242,11 @@ function closeSecurityModal() {
 function returnToMainMenu() {
     // Safety: Force close any open modals to prevent overlay issues
     document.getElementById('securityModal').classList.remove('show');
+    const mksModal = document.getElementById('mksModal');
+    if (mksModal) {
+        mksModal.classList.remove('show');
+        mksModal.style.display = 'none'; // Force hide
+    }
     document.getElementById('loginModal').classList.remove('show');
     document.getElementById('loginModal').style.display = 'none'; // Double safety
 
