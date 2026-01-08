@@ -1963,6 +1963,109 @@ function downloadMKSTemplate() {
     }
 }
 
+// Function to Export Security Data
+function exportSecurityData() {
+    if (!securityRecords || securityRecords.length === 0) {
+        alert("Não há dados para exportar.");
+        return;
+    }
+
+    try {
+        const exportData = securityRecords.map(record => {
+            const row = {
+                "Atividade": record.atividade || "",
+                "TH": record.th || "",
+                "Turno": record.turno || "",
+                "Contratado/Substituído": record.contratado || "",
+                "Solicitante": record.solicitante || "",
+                "Responsável": record.responsavel || "",
+                "Observação": record.observacao || ""
+            };
+
+            // Map days
+            for (let i = 1; i <= 31; i++) {
+                row[`${i} Previsto`] = record[`day${i}_P`] || "";
+                row[`${i} Real`] = record[`day${i}_R`] || "";
+            }
+            return row;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Dados Segurança");
+
+        // Set widths for better readability
+        const wscols = [
+            { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 30 }
+        ];
+        // Add widths for days
+        for (let i = 1; i <= 31; i++) {
+            wscols.push({ wch: 8 }); // Previsto
+            wscols.push({ wch: 8 }); // Real
+        }
+        worksheet['!cols'] = wscols;
+
+        const dateStr = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(workbook, `Seguranca_Export_${dateStr}.xlsx`);
+        console.log("Exportação Segurança concluída.");
+
+    } catch (e) {
+        console.error("Erro exportação:", e);
+        alert("Erro ao exportar: " + e.message);
+    }
+}
+
+// Function to Export MKS Data
+function exportMKSData() {
+    if (!mksRecords || mksRecords.length === 0) {
+        alert("Não há dados para exportar.");
+        return;
+    }
+
+    try {
+        const exportData = mksRecords.map(record => {
+            const row = {
+                "Atividade": record.atividade || "",
+                "TH": record.th || "",
+                "Turno": record.turno || "",
+                "Contratado/Substituído": record.contratado || "",
+                "Solicitante": record.solicitante || "",
+                "Responsável": record.responsavel || "",
+                "Observação": record.observacao || ""
+            };
+
+            // Map days
+            for (let i = 1; i <= 31; i++) {
+                row[`${i} Previsto`] = record[`day${i}_P`] || "";
+                row[`${i} Real`] = record[`day${i}_R`] || "";
+            }
+            return row;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Dados MKS");
+
+        // Set widths
+        const wscols = [
+            { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 30 }
+        ];
+        for (let i = 1; i <= 31; i++) {
+            wscols.push({ wch: 8 });
+            wscols.push({ wch: 8 });
+        }
+        worksheet['!cols'] = wscols;
+
+        const dateStr = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(workbook, `MKS_Export_${dateStr}.xlsx`);
+        console.log("Exportação MKS concluída.");
+
+    } catch (e) {
+        console.error("Erro exportação:", e);
+        alert("Erro ao exportar: " + e.message);
+    }
+}
+
 // --- MKS Configuration ---
 
 async function loadMKSConfig() {
