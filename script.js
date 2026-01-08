@@ -1737,9 +1737,27 @@ function closeSecurityModal() {
 }
 
 function returnToMainMenu() {
+    // Safety: Force close any open modals to prevent overlay issues
+    document.getElementById('securityModal').classList.remove('show');
+    document.getElementById('loginModal').classList.remove('show');
+    document.getElementById('loginModal').style.display = 'none'; // Double safety
+
     document.getElementById('mainDashboard').style.display = 'none';
     document.getElementById('mainMenu').style.display = 'flex';
 }
+
+// About Modal
+function openAboutModal() {
+    document.getElementById('aboutModal').classList.add('show');
+}
+
+function closeAboutModal() {
+    document.getElementById('aboutModal').classList.remove('show');
+}
+
+// Expose globally
+window.openAboutModal = openAboutModal;
+window.closeAboutModal = closeAboutModal;
 
 // Make logout available globally matching the onclick="logout()" calls
 window.logout = handleLogout;
