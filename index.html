@@ -15,7 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style_final.css?v=28">
+    <link rel="stylesheet" href="style_final.css?v=30">
 </head>
 
 <body>
@@ -35,6 +35,10 @@
 
                 <button onclick="openSecurityModalDirectly()" class="btn-main-menu btn-mm-success">
                     🛡️ SAFE CONTROL
+                </button>
+
+                <button onclick="openMKSModalDirectly()" class="btn-main-menu btn-mm-mks">
+                    🏭 MKS
                 </button>
             </div>
 
@@ -424,62 +428,108 @@
                             <button class="btn-control btn-security-action" onclick="clearSecurityData()"
                                 style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
 
-                            <button class="btn-control btn-security-action" onclick="openSecurityConfigModal()"
-                                style="background: #0ea5e9; color: white;">⚙️ Configurar Dias</button>
+                            </table>
                         </div>
                     </div>
-                    <div class="security-table-wrapper">
-                        <table class="security-table">
-                            <thead>
-                                <tr id="securityHeaderRow">
-                                    <th rowspan="2">ID</th>
-                                    <th rowspan="2">Atividade</th>
-                                    <th rowspan="2">TH</th>
-                                    <th rowspan="2">Turno</th>
-                                    <th rowspan="2">Contratado/Substituído</th>
-                                    <th rowspan="2">Solicitante</th>
-                                    <th rowspan="2">Responsável</th>
-                                    <th rowspan="2">Observação</th>
-                                    <!-- Dynamic Day Headers injected here -->
-                                    <th rowspan="2" style="text-align: center;">Ações</th>
-                                </tr>
-                                <tr class="subheader-row" id="securitySubHeaderRow">
-                                    <!-- Dynamic P/R Headers injected here -->
-                                </tr>
-                            </thead>
-                            <tbody id="securityTableBody"></tbody>
-                        </table>
+                </div>
+            </div>
+
+
+
+            <!-- Security Form Modal (Add/Edit) -->
+            <div id="securityFormModal" class="modal">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h2 id="securityFormTitle">🛡️ Novo Registro de Segurança</h2>
+                        <button class="modal-close" onclick="closeSecurityFormModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="securityEditId">
+                        <div class="manual-form">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label>Atividade</label>
+                                    <input type="text" id="secAtividade" class="filter-input"
+                                        placeholder="Descrição da atividade">
+                                </div>
+                                <div class="form-group">
+                                    <label>TH</label>
+                                    <select id="secTH" class="filter-select">
+                                        <option value="SIM">SIM</option>
+                                        <option value="NÃO">NÃO</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Turno</label>
+                                    <select id="secTurno" class="filter-select">
+                                        <option value="M">M</option>
+                                        <option value="T">T</option>
+                                        <option value="N">N</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Contratado/Substituído</label>
+                                    <input type="text" id="secContratado" class="filter-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Solicitante</label>
+                                    <input type="text" id="secSolicitante" class="filter-input">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Responsável</label>
+                                    <input type="text" id="secResponsavel" class="filter-input">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Observação</label>
+                                    <textarea id="secObservacao" class="filter-input"
+                                        style="min-height: 80px;"></textarea>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Dias (1-31) - [P: Previsto / R: Real]</label>
+                                    <div class="days-grid" id="securityDaysGrid"
+                                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px;">
+                                        <!-- Dynamically generated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-control" style="background: var(--success); color: white; flex: 1;"
+                                onclick="saveSecurityRecord()">💾 Salvar</button>
+                            <button class="btn-control" style="background: var(--danger); color: white; flex: 1;"
+                                onclick="closeSecurityFormModal()">❌ Cancelar</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Security Form Modal (Add/Edit) -->
-        <div id="securityFormModal" class="modal">
+        <!-- MKS Form Modal (Add/Edit) -->
+        <div id="mksFormModal" class="modal">
             <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
-                    <h2 id="securityFormTitle">🛡️ Novo Registro de Segurança</h2>
-                    <button class="modal-close" onclick="closeSecurityFormModal()">×</button>
+                    <h2 id="mksFormTitle">🛡️ Novo Registro MKS</h2>
+                    <button class="modal-close" onclick="closeMKSFormModal()">×</button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="securityEditId">
+                    <input type="hidden" id="mksEditId">
                     <div class="manual-form">
                         <div class="form-grid">
                             <div class="form-group full-width">
                                 <label>Atividade</label>
-                                <input type="text" id="secAtividade" class="filter-input"
+                                <input type="text" id="mksAtividade" class="filter-input"
                                     placeholder="Descrição da atividade">
                             </div>
                             <div class="form-group">
                                 <label>TH</label>
-                                <select id="secTH" class="filter-select">
+                                <select id="mksTH" class="filter-select">
                                     <option value="SIM">SIM</option>
                                     <option value="NÃO">NÃO</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label>Turno</label>
-                                <select id="secTurno" class="filter-select">
+                                <select id="mksTurno" class="filter-select">
                                     <option value="M">M</option>
                                     <option value="T">T</option>
                                     <option value="N">N</option>
@@ -487,23 +537,23 @@
                             </div>
                             <div class="form-group">
                                 <label>Contratado/Substituído</label>
-                                <input type="text" id="secContratado" class="filter-input">
+                                <input type="text" id="mksContratado" class="filter-input">
                             </div>
                             <div class="form-group">
                                 <label>Solicitante</label>
-                                <input type="text" id="secSolicitante" class="filter-input">
+                                <input type="text" id="mksSolicitante" class="filter-input">
                             </div>
                             <div class="form-group full-width">
                                 <label>Responsável</label>
-                                <input type="text" id="secResponsavel" class="filter-input">
+                                <input type="text" id="mksResponsavel" class="filter-input">
                             </div>
                             <div class="form-group full-width">
                                 <label>Observação</label>
-                                <textarea id="secObservacao" class="filter-input" style="min-height: 80px;"></textarea>
+                                <textarea id="mksObservacao" class="filter-input" style="min-height: 80px;"></textarea>
                             </div>
                             <div class="form-group full-width">
                                 <label>Dias (1-31) - [P: Previsto / R: Real]</label>
-                                <div class="days-grid" id="securityDaysGrid"
+                                <div class="days-grid" id="mksDaysGrid"
                                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px;">
                                     <!-- Dynamically generated by JS -->
                                 </div>
@@ -512,14 +562,13 @@
                     </div>
                     <div class="modal-footer">
                         <button class="btn-control" style="background: var(--success); color: white; flex: 1;"
-                            onclick="saveSecurityRecord()">💾 Salvar</button>
+                            onclick="saveMKSRecord()">💾 Salvar</button>
                         <button class="btn-control" style="background: var(--danger); color: white; flex: 1;"
-                            onclick="closeSecurityFormModal()">❌ Cancelar</button>
+                            onclick="closeMKSFormModal()">❌ Cancelar</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     </div> <!-- End Main Dashboard -->
 
     <!-- Security Days Config Modal -->
@@ -563,8 +612,106 @@
         </div>
     </div>
 
-    <script src="firebase-config.js?v=21"></script>
-    <script src="script.js?v=27"></script>
+    <!-- MKS Days Config Modal -->
+    <div id="mksDaysModal" class="modal" style="display: none;">
+        <div class="modal-content"
+            style="max-width: 550px; background: #1e293b; color: white; border: 1px solid #334155;">
+            <div class="modal-header" style="border-bottom: 1px solid #334155;">
+                <h2 style="color: white; font-size: 1.5rem;">⚙️ Configurar Dias Visíveis (MKS)</h2>
+                <button class="modal-close" onclick="closeMKSDaysModal()" style="color: #94a3b8;">×</button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem; font-size: 0.95rem;">
+                    Selecione os dias que devem aparecer na tabela e no formulário.
+                    <br><small style="opacity: 0.7;">Alterações aqui afetam todos os usuários.</small>
+                </p>
+
+                <div style="display: flex; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                    <button class="btn-control"
+                        style="background: #0ea5e9; color: white; border: none; padding: 0.6rem 0.5rem; font-size: 0.85rem; border-radius: 8px; flex: 1 0 140px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 0.3rem;"
+                        onclick="toggleAllMKSDays(true)">✅ Marcar Todos</button>
+                    <button class="btn-control"
+                        style="background: #ef4444; color: white; border: none; padding: 0.6rem 0.5rem; font-size: 0.85rem; border-radius: 8px; flex: 1 0 140px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 0.3rem;"
+                        onclick="toggleAllMKSDays(false)">❌ Desmarcar Todos</button>
+                </div>
+
+                <div id="mksDaysConfigGrid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 0.6rem; max-height: 300px; overflow-y: auto; padding: 0.5rem; background: #0f172a; border-radius: 8px; border: 1px solid #334155;">
+                    <!-- Checkboxes generated by JS -->
+                </div>
+
+                <div class="form-actions"
+                    style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid #334155; padding-top: 1rem;">
+                    <button class="btn-control"
+                        style="background: #475569; color: white; width: auto; padding: 0.6rem 1.5rem; font-size: 0.9rem;"
+                        onclick="closeMKSDaysModal()">Cancelar</button>
+                    <button class="btn-control"
+                        style="background: #10b981; color: white; width: auto; padding: 0.6rem 1.5rem; font-size: 0.9rem;"
+                        onclick="saveMKSDays()">💾 Salvar Configuração</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MKS Control Modal (List View) - MOVED TO BODY END -->
+    <div id="mksModal" class="modal">
+        <div class="modal-content" style="max-width: 98vw; width: 98vw; padding: 1.5rem;">
+            <div class="modal-header"
+                style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button onclick="returnToMainMenu()"
+                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                        ↩️ Menu
+                    </button>
+                    <h2>🏭 MKS Control</h2>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="security-controls-container">
+                    <button class="btn-control mobile-menu-toggle" onclick="toggleMKSMobileMenu()"
+                        style="display: none; width: 100%; margin-bottom: 1rem; background: var(--secondary); color: white; justify-content: center;">
+                        ☰ Menu de Ações
+                    </button>
+
+                    <div class="section-actions security-actions" id="mksActionsMenu"
+                        style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <button class="btn-control btn-security-action" onclick="openMKSFormModal()"
+                            style="background: #10b981; color: white;">🛡️ Novo Registro</button>
+
+                        <label for="mksExcelInput" class="btn-control btn-security-action"
+                            style="background: #6366f1; color: white; cursor: pointer; margin-bottom: 0;">
+                            📊 Importar Excel
+                        </label>
+                        <input type="file" id="mksExcelInput" accept=".xlsx, .xls" style="display: none;"
+                            onchange="handleMKSExcelUpload(event)">
+
+                        <button class="btn-control btn-security-action" onclick="downloadMKSTemplate()"
+                            style="background: #8b5cf6; color: white;">📑 Modelo XLS</button>
+
+                        <button class="btn-control btn-security-action" onclick="clearMKSData()"
+                            style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
+
+                        <button class="btn-control btn-security-action" onclick="openMKSDaysConfig()"
+                            style="background: #f59e0b; color: white;">⚙️ Configurar Dias</button>
+                    </div>
+
+                    <div
+                        style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                        <table class="security-table" id="mksTable">
+                            <thead>
+                                <tr id="mksHeaderRow"></tr>
+                                <tr id="mksSubHeaderRow" class="subheader-row"></tr>
+                            </thead>
+                            <tbody id="mksTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js?v=23"></script>
+    <script src="script.js?v=35"></script>
     <script src="migration.js?v=21"></script>
 </body>
 
