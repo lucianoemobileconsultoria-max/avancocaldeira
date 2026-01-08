@@ -25,7 +25,11 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
         // User is signed in
         console.log('User logged in:', user.email);
-        hideLoginModal();
+
+        // Show Main Menu instead of directly revealing app
+        // Show Main Menu
+        showMainMenu();
+
         updateUserDisplay(user);
 
         // Show admin button if user is admin
@@ -48,6 +52,11 @@ auth.onAuthStateChanged(async (user) => {
         // User is signed out
         console.log('User logged out');
         showLoginModal();
+
+        // Hide screens
+        if (document.getElementById('mainMenu')) document.getElementById('mainMenu').style.display = 'none';
+        if (document.getElementById('mainDashboard')) document.getElementById('mainDashboard').style.display = 'none';
+
         updateUserDisplay(null);
 
         // Hide admin button
@@ -383,3 +392,23 @@ function hideSyncIndicator() {
         indicator.style.display = 'none';
     }
 }
+
+// Ensure Main Menu visibility logic is available immediately
+function showMainMenu() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.classList.remove('show');
+        loginModal.style.display = 'none';
+    }
+
+    // Safety check for elements
+    const menu = document.getElementById('mainMenu');
+    const db = document.getElementById('mainDashboard');
+
+    if (menu) menu.style.display = 'flex';
+    if (db) db.style.display = 'none';
+}
+
+// Expose to window so script.js can overwrite or use it? 
+// script.js will overwrite it, which is fine as long as logic is same.
+window.showMainMenu = showMainMenu;
