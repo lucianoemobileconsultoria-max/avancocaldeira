@@ -425,6 +425,9 @@
                         <input type="file" id="mksExcelInput" accept=".xlsx, .xls" style="display: none;"
                             onchange="handleMKSExcelUpload(event)">
 
+                        <button class="btn-control btn-security-action" onclick="exportMKSData()"
+                            style="background: #2563eb; color: white;">📤 Exportar Excel</button>
+
                         <button class="btn-control btn-security-action" onclick="downloadMKSTemplate()"
                             style="background: #8b5cf6; color: white;">📑 Modelo XLS</button>
 
@@ -483,6 +486,9 @@
                         </label>
                         <input type="file" id="securityExcelInput" accept=".xlsx, .xls" style="display: none;"
                             onchange="handleSecurityExcelUpload(event)">
+
+                        <button class="btn-control btn-security-action" onclick="exportSecurityData()"
+                            style="background: #2563eb; color: white;">📤 Exportar Excel</button>
 
                         <button class="btn-control btn-security-action" onclick="downloadSecurityTemplate()"
                             style="background: #8b5cf6; color: white;">📑 Modelo XLS</button>
@@ -723,7 +729,7 @@
         </div>
     </div>
     <script src="firebase-config.js?v=23"></script>
-    <script src="script.js?v=38"></script>
+    <script src="script.js?v=39"></script>
     <script src="migration.js?v=21"></script>
 </body>
 
