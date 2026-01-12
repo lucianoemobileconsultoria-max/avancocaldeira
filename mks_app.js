@@ -959,19 +959,27 @@ function calculateStats() {
     // Calculate overall progress
     const p = t > 0 ? Math.round(list.reduce((sum, a) => sum + getRealProgress(a) / 100, 0) / t * 100) : 0;
 
-    // Welds stats
+    // Welds stats - FORCE NUMERIC TYPES
     let totalWelds = 0;
     let completedWelds = 0;
 
     list.forEach(a => {
         if (a.hasWelds) {
-            const tw = parseInt(a.totalWelds) || 0;
+            const tw = Number(a.totalWelds) || 0;
+            const cw = Number(getWeldsCompleted(a.uniqueKey)) || 0;
             totalWelds += tw;
-            completedWelds += getWeldsCompleted(a.uniqueKey);
+            completedWelds += cw;
         }
     });
 
-    return { total: t, completed: c, critical: crit, overallProgress: p, totalWelds, completedWelds };
+    return {
+        total: t,
+        completed: c,
+        critical: crit,
+        overallProgress: p,
+        totalWelds: Number(totalWelds) || 0,
+        completedWelds: Number(completedWelds) || 0
+    };
 }
 function updateStats() {
     const s = calculateStats();
@@ -992,8 +1000,10 @@ function updateStats() {
     }
 
     if (wel) {
-        const perc = s.totalWelds > 0 ? Math.round((s.completedWelds / s.totalWelds) * 100) : 0;
-        wel.textContent = `${s.completedWelds} / ${s.totalWelds} (${perc}%)`;
+        const totalW = Number(s.totalWelds) || 0;
+        const completedW = Number(s.completedWelds) || 0;
+        const perc = totalW > 0 ? Math.round((completedW / totalW) * 100) : 0;
+        wel.textContent = `${completedW} / ${totalW} (${perc}%)`;
     }
 }
 
