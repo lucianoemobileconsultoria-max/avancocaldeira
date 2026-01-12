@@ -1163,7 +1163,7 @@ function renderActivity(a, isChild = false) {
                         <div class="welds-box remaining" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); padding: 5px 10px; border-radius: 8px; text-align: center;">
                             <div style="font-size: 0.7rem; color: #fca5a5; text-transform: uppercase;">RESTAM</div>
                             <div class="welds-remaining-value" data-key="${a.uniqueKey}" style="font-size: 1.1rem; font-weight: 800; color: #fca5a5;">
-                                ${Math.max(0, a.totalWelds - getWeldsCompleted(a.uniqueKey))}
+                                ${Math.max(0, Number(a.totalWelds) - Number(getWeldsCompleted(a.uniqueKey)))}
                             </div>
                         </div>
 
@@ -1171,7 +1171,7 @@ function renderActivity(a, isChild = false) {
                         <div class="welds-box done" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 10px; border-radius: 8px; text-align: center;">
                             <div style="font-size: 0.7rem; color: #6ee7b7; text-transform: uppercase;">FEITO</div>
                             <div class="welds-done-value" data-key="${a.uniqueKey}" style="font-size: 1.1rem; font-weight: 800; color: #6ee7b7;">
-                                ${getWeldsCompleted(a.uniqueKey)}
+                                ${Number(getWeldsCompleted(a.uniqueKey)) || 0}
                             </div>
                         </div>
 
