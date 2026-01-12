@@ -206,6 +206,18 @@ async function loadActivitiesFromFirestore() {
         if (typeof hideSyncIndicator === 'function') hideSyncIndicator();
 
         if (doc.exists && doc.data().activities) {
+            // CRITICAL: Also load weldsData from Firestore
+            try {
+                const weldsDoc = await db.collection('users').doc(currentUser.uid).get();
+                if (weldsDoc.exists && weldsDoc.data().weldsData) {
+                    weldsData = weldsDoc.data().weldsData;
+                    localStorage.setItem('caldeira_welds', JSON.stringify(weldsData));
+                    console.log('✅ weldsData carregado do Firestore:', weldsData);
+                }
+            } catch (e) {
+                console.error('Erro ao carregar weldsData do Firestore:', e);
+            }
+
             return doc.data().activities;
         }
     } catch (error) {
@@ -659,10 +671,13 @@ function extractWeldsInfo(name) {
 
 // Load welds data
 function loadWeldsData() {
+    console.log('🟣 loadWeldsData CHAMADO');
     try {
         const saved = localStorage.getItem('caldeira_welds');
+        console.log('🟣 localStorage.getItem:', saved);
         if (saved) {
             weldsData = JSON.parse(saved);
+            console.log('🟣 weldsData carregado:', weldsData);
 
             // MIGRATION: Convert old format to new format
             for (const key in weldsData) {
@@ -674,28 +689,37 @@ function loadWeldsData() {
             }
         } else {
             weldsData = {}; // Ensure it's an empty object
+            console.log('🟣 Nenhum dado - weldsData = {}');
         }
     } catch (e) {
-        console.error('Erro ao carregar weldsData:', e);
+        console.error('🔴 Erro ao carregar weldsData:', e);
         weldsData = {}; // Reset to empty on error
     }
+    console.log('🟣 loadWeldsData FINALIZADO - weldsData:', weldsData);
 }
 
 // Save welds data
 async function saveWeldsData() {
+    console.log('🔵 saveWeldsData CHAMADO');
+    console.log('🔵 weldsData atual:', JSON.stringify(weldsData));
     try {
         // Always save to localStorage as backup
         localStorage.setItem('caldeira_welds', JSON.stringify(weldsData));
+        console.log('✅ Salvo no localStorage');
 
+        // FIRESTORE DISABLED FOR NOW - USING ONLY LOCALSTORAGE
         // If logged in, also save to Firestore
-        if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined') {
-            await db.collection('users').doc(currentUser.uid).set({
-                weldsData: weldsData,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-        }
+        // if (typeof currentUser !== 'undefined' && currentUser && typeof db !== 'undefined') {
+        //     await db.collection('users').doc(currentUser.uid).set({
+        //         weldsData: weldsData,
+        //         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        //     }, { merge: true });
+        //     console.log('✅ Salvo no Firestore');
+        // } else {
+        //     console.log('ℹ️ Não logado - só salvou no localStorage');
+        // }
     } catch (e) {
-        console.error('Erro ao salvar weldsData:', e);
+        console.error('❌ Erro ao salvar weldsData:', e);
     }
 }
 
@@ -720,9 +744,11 @@ function getWeldsCompleted(key) {
     return 0;
 }
 function setWeldsCompleted(key, val, total) {
+    console.log('🟢 setWeldsCompleted:', { key, val, total });
     if (!weldsData[key]) weldsData[key] = {};
     weldsData[key].completed = Math.max(0, Math.min(total, val));
     weldsData[key].total = total;
+    console.log('🟢 weldsData[' + key + ']:', weldsData[key]);
     saveWeldsData();
 }
 function incrementWelds(key) {
@@ -959,18 +985,48 @@ function calculateStats() {
     // Calculate overall progress
     const p = t > 0 ? Math.round(list.reduce((sum, a) => sum + getRealProgress(a) / 100, 0) / t * 100) : 0;
 
-    // Welds stats - FORCE NUMERIC TYPES
+    // Welds stats - READ DIRECTLY FROM LOCALSTORAGE
+    // Count only LEAF activities (activities that don't have children) to avoid double counting
     let totalWelds = 0;
     let completedWelds = 0;
 
+    // Load saved welds data once
+    let savedWeldsData = {};
+    try {
+        const saved = localStorage.getItem('caldeira_welds');
+        if (saved) savedWeldsData = JSON.parse(saved);
+    } catch (e) { }
+
+    console.log('--- CALCULO DE SOLDAS ---');
     list.forEach(a => {
         if (a.hasWelds) {
-            const tw = Number(a.totalWelds) || 0;
-            const cw = Number(getWeldsCompleted(a.uniqueKey)) || 0;
-            totalWelds += tw;
-            completedWelds += cw;
+            const cleanId = String(a.id).trim();
+
+            // Check if this activity is a Parent (check against FULL LIST of activities)
+            const isParent = activities.some(other => {
+                const otherId = String(other.id).trim();
+                return otherId !== cleanId && otherId.startsWith(cleanId + '.');
+            });
+
+            // Only count if it's a LEAF (not a parent)
+            if (!isParent) {
+                const tw = Number(a.totalWelds) || 0;
+                let cw = 0;
+                if (savedWeldsData[a.uniqueKey]) {
+                    cw = Number(savedWeldsData[a.uniqueKey].completed) || 0;
+                }
+
+                // DEBUG: Log activity being summed
+                // console.log(`[+] SOMANDO (Folha): ID=${cleanId} Welds=${tw}`);
+
+                totalWelds += tw;
+                completedWelds += cw;
+            } else {
+                // console.log(`[-] IGNORADO (Pai): ID=${cleanId}`);
+            }
         }
     });
+    console.log(`--- TOTAL: ${totalWelds} ---`);
 
     return {
         total: t,
@@ -983,6 +1039,30 @@ function calculateStats() {
 }
 function updateStats() {
     const s = calculateStats();
+
+    // FORCE ROBUST WELD CALCULATION
+    // Re-filter list to ensure we have the correct scope
+    let list = [];
+    if (typeof currentViewMode !== 'undefined' && currentViewMode === 'rotina') {
+        list = activities.filter(a => a.rotina && (String(a.rotina).toUpperCase().includes('SIM') || String(a.rotina).toUpperCase() === 'S'));
+    } else {
+        list = activities.filter(a => !(a.rotina && (String(a.rotina).toUpperCase().includes('SIM') || String(a.rotina).toUpperCase() === 'S')));
+    }
+
+    // Calculate using the new helper that handles hierarchy correctly
+    if (typeof calculateWeldsRobustV3 === 'function') {
+        const wStats = calculateWeldsRobustV3(list);
+        s.totalWelds = wStats.total;
+        s.completedWelds = wStats.completed;
+    } else if (typeof calculateWeldsRobustV2 === 'function') {
+        const wStats = calculateWeldsRobustV2(list);
+        s.totalWelds = wStats.total;
+        s.completedWelds = wStats.completed;
+    } else if (typeof calculateWeldsRobust === 'function') {
+        const wStats = calculateWeldsRobust(list);
+        s.totalWelds = wStats.total;
+        s.completedWelds = wStats.completed;
+    }
     const tel = document.getElementById('totalActivities'); if (tel) tel.textContent = s.total;
     const cel = document.getElementById('completedActivities'); if (cel) cel.textContent = s.completed;
     const oel = document.getElementById('overallProgress'); if (oel) oel.textContent = `${s.overallProgress}%`;
@@ -1163,7 +1243,18 @@ function renderActivity(a, isChild = false) {
                         <div class="welds-box remaining" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); padding: 5px 10px; border-radius: 8px; text-align: center;">
                             <div style="font-size: 0.7rem; color: #fca5a5; text-transform: uppercase;">RESTAM</div>
                             <div class="welds-remaining-value" data-key="${a.uniqueKey}" style="font-size: 1.1rem; font-weight: 800; color: #fca5a5;">
-                                ${Math.max(0, Number(a.totalWelds) - Number(getWeldsCompleted(a.uniqueKey)))}
+                                ${(() => {
+                const total = Number(a.totalWelds) || 0;
+                let completed = 0;
+                try {
+                    const saved = localStorage.getItem('caldeira_welds');
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        if (data[a.uniqueKey]) completed = Number(data[a.uniqueKey].completed) || 0;
+                    }
+                } catch (e) { }
+                return Math.max(0, total - completed);
+            })()}
                             </div>
                         </div>
 
@@ -1171,7 +1262,16 @@ function renderActivity(a, isChild = false) {
                         <div class="welds-box done" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 10px; border-radius: 8px; text-align: center;">
                             <div style="font-size: 0.7rem; color: #6ee7b7; text-transform: uppercase;">FEITO</div>
                             <div class="welds-done-value" data-key="${a.uniqueKey}" style="font-size: 1.1rem; font-weight: 800; color: #6ee7b7;">
-                                ${Number(getWeldsCompleted(a.uniqueKey)) || 0}
+                                ${(() => {
+                try {
+                    const saved = localStorage.getItem('caldeira_welds');
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        if (data[a.uniqueKey]) return Number(data[a.uniqueKey].completed) || 0;
+                    }
+                } catch (e) { }
+                return 0;
+            })()}
                             </div>
                         </div>
 
@@ -1179,7 +1279,7 @@ function renderActivity(a, isChild = false) {
                         <div class="welds-box total" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 5px 10px; border-radius: 8px; text-align: center;">
                             <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase;">TOTAL</div>
                             <div style="font-size: 1.1rem; font-weight: 800; color: #fff;">
-                                ${a.totalWelds}
+                                ${Number(a.totalWelds) || 0}
                             </div>
                         </div>
 
@@ -3446,3 +3546,202 @@ async function loadWeldsData() {
 window.incrementWelds = incrementWelds;
 window.decrementWelds = decrementWelds;
 window.loadWeldsData = loadWeldsData;
+
+// Helper for robust weld calculation
+function calculateWeldsRobust(list) {
+    let totalWelds = 0;
+    let completedWelds = 0;
+
+    // Load saved welds data
+    let savedWeldsData = {};
+    try {
+        const saved = localStorage.getItem('caldeira_welds');
+        if (saved) savedWeldsData = JSON.parse(saved);
+    } catch (e) { }
+
+    // 1. Flatten hierarchy handling Same-ID groups
+    const hierarchy = createActivityHierarchy(list);
+    const countingList = [];
+
+    hierarchy.forEach(item => {
+        if (item.type === 'standalone') {
+            countingList.push(item.activity);
+        } else {
+            // Group: Add only children
+            if (item.children && item.children.length > 0) {
+                countingList.push(...item.children);
+            } else {
+                countingList.push(item.parent);
+            }
+            if (item.others) countingList.push(...item.others);
+        }
+    });
+
+    console.log('--- CALCULO DE SOLDAS (Misto) ---');
+
+    // 2. Filter Hierarchical Parents
+    countingList.forEach(a => {
+        if (a.hasWelds) {
+            const cleanId = String(a.id).trim();
+            const isParent = activities.some(other => {
+                const otherId = String(other.id).trim();
+                if (otherId === cleanId) return false;
+                return otherId.startsWith(cleanId + '.') ||
+                    otherId.startsWith(cleanId + ' ') ||
+                    otherId.startsWith(cleanId + '-');
+            });
+
+            if (!isParent) {
+                const tw = Number(a.totalWelds) || 0;
+                let cw = 0;
+                if (savedWeldsData[a.uniqueKey]) {
+                    cw = Number(savedWeldsData[a.uniqueKey].completed) || 0;
+                }
+                totalWelds += tw;
+                completedWelds += cw;
+            }
+        }
+    });
+
+    console.log(`--- TOTAL FINAL: ${totalWelds} ---`);
+    return { total: totalWelds, completed: completedWelds };
+}
+
+// Helper for robust weld calculation V2 (Deduplicated)
+function calculateWeldsRobustV2(list) {
+    let totalWelds = 0;
+    let completedWelds = 0;
+
+    // Load saved welds data
+    let savedWeldsData = {};
+    try {
+        const saved = localStorage.getItem('caldeira_welds');
+        if (saved) savedWeldsData = JSON.parse(saved);
+    } catch (e) { }
+
+    // 1. DEDUPLICATE BY ID FIRST
+    // Keep only the BEST instance of each Activity ID
+    // If multiple rows exist for ID "4", pick the one that actually has welds!
+    const uniqueActivitiesMap = new Map();
+    list.forEach(a => {
+        const cleanId = String(a.id).trim();
+        const currentHasWelds = a.hasWelds && Number(a.totalWelds) > 0;
+
+        if (!uniqueActivitiesMap.has(cleanId)) {
+            uniqueActivitiesMap.set(cleanId, a);
+        } else {
+            // Check if we should replace the stored one
+            const stored = uniqueActivitiesMap.get(cleanId);
+            const storedHasWelds = stored.hasWelds && Number(stored.totalWelds) > 0;
+
+            // If stored has no welds, but current does, SWAP!
+            if (!storedHasWelds && currentHasWelds) {
+                uniqueActivitiesMap.set(cleanId, a);
+            }
+        }
+    });
+
+    const uniqueList = Array.from(uniqueActivitiesMap.values());
+
+    console.log(`--- CALCULO DE SOLDAS V2 (Deduplicado: ${list.length} -> ${uniqueList.length}) ---`);
+
+    // 2. Filter Hierarchical Parents
+    uniqueList.forEach(a => {
+        if (a.hasWelds) {
+            const cleanId = String(a.id).trim();
+
+            // Check if is Hierarchical Parent
+            const isParent = uniqueList.some(other => {
+                const otherId = String(other.id).trim();
+                if (otherId === cleanId) return false;
+
+                return otherId.startsWith(cleanId + '.') ||
+                    otherId.startsWith(cleanId + ' ') ||
+                    otherId.startsWith(cleanId + '-');
+            });
+
+            if (!isParent) {
+                const tw = Number(a.totalWelds) || 0;
+                let cw = 0;
+                if (savedWeldsData[a.uniqueKey]) {
+                    cw = Number(savedWeldsData[a.uniqueKey].completed) || 0;
+                }
+                totalWelds += tw;
+                completedWelds += cw;
+            }
+        }
+    });
+
+    console.log(`--- TOTAL FINAL V2: ${totalWelds} ---`);
+    return { total: totalWelds, completed: completedWelds };
+}
+
+// Helper for robust weld calculation V3 (Smart Parent Logic)
+function calculateWeldsRobustV3(list) {
+    let totalWelds = 0;
+    let completedWelds = 0;
+
+    // Load saved welds data
+    let savedWeldsData = {};
+    try {
+        const saved = localStorage.getItem('caldeira_welds');
+        if (saved) savedWeldsData = JSON.parse(saved);
+    } catch (e) { }
+
+    // 1. DEDUPLICATE BY ID FIRST (Best Instance)
+    const uniqueActivitiesMap = new Map();
+    list.forEach(a => {
+        const cleanId = String(a.id).trim();
+        const currentHasWelds = a.hasWelds && Number(a.totalWelds) > 0;
+        if (!uniqueActivitiesMap.has(cleanId)) {
+            uniqueActivitiesMap.set(cleanId, a);
+        } else {
+            const stored = uniqueActivitiesMap.get(cleanId);
+            const storedHasWelds = stored.hasWelds && Number(stored.totalWelds) > 0;
+            if (!storedHasWelds && currentHasWelds) uniqueActivitiesMap.set(cleanId, a);
+        }
+    });
+
+    const uniqueList = Array.from(uniqueActivitiesMap.values());
+    console.log(`--- CALCULO DE SOLDAS V3 (List: ${uniqueList.length}) ---`);
+
+    // 2. Filter Hierarchical Parents with SMART LOGIC
+    uniqueList.forEach(a => {
+        if (a.hasWelds) {
+            const cleanId = String(a.id).trim();
+
+            // Find children in current list
+            const children = uniqueList.filter(other => {
+                const otherId = String(other.id).trim();
+                if (otherId === cleanId) return false;
+                return otherId.startsWith(cleanId + '.') ||
+                    otherId.startsWith(cleanId + ' ') ||
+                    otherId.startsWith(cleanId + '-');
+            });
+
+            const isParent = children.length > 0;
+            let shouldCount = true;
+
+            if (isParent) {
+                // Only ignore parent if children HAVE welds (> 0)
+                const childrenWeldsSum = children.reduce((sum, c) => sum + (Number(c.totalWelds) || 0), 0);
+                if (childrenWeldsSum > 0) {
+                    shouldCount = false; // Children handle the count
+                }
+            }
+
+            if (shouldCount) {
+                const tw = Number(a.totalWelds) || 0;
+                let cw = 0;
+                if (savedWeldsData[a.uniqueKey]) {
+                    cw = Number(savedWeldsData[a.uniqueKey].completed) || 0;
+                }
+                totalWelds += tw;
+                completedWelds += cw;
+            }
+        }
+    });
+
+    console.log(`--- TOTAL FINAL V3: ${totalWelds} ---`);
+    return { total: totalWelds, completed: completedWelds };
+}
