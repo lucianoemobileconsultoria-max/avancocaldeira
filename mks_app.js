@@ -1928,21 +1928,33 @@ function openSecurityFormModal(id = null) {
     document.getElementById('securityFormModal').classList.add('show');
     document.getElementById('securityEditId').value = id || '';
 
-    // Generate dynamic day inputs (Previsto/Real)
+    // Generate dynamic day inputs (Previsto/Real/C/S)
     const grid = document.getElementById('securityDaysGrid');
     if (grid) {
         grid.innerHTML = '';
         activeSecurityDays.forEach(i => {
             grid.innerHTML += `
-                <div style="display: flex; flex-direction: column; align-items: center; border: 1px solid #bfdbfe; padding: 4px; border-radius: 6px; background: #fff;">
-                    <span style="font-size: 0.9rem; font-weight: 800; color: #1e3a8a; margin-bottom: 3px;">Dia ${i}</span>
-                    <div style="display: flex; gap: 4px;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; border: 1px solid #bfdbfe; padding: 3px; border-radius: 6px; background: #fff; height: 100%;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #1e3a8a; margin-bottom: 2px;">Dia ${i}</span>
+                    
+                    <!-- Progress Row -->
+                    <div style="display: flex; gap: 2px; margin-bottom: 2px; width: 100%; justify-content: center;">
                         <input type="text" id="secDay${i}_P" placeholder="P" class="day-input" 
-                            style="width: 45px; text-align: center; border: 1px solid #93c5fd; font-size: 0.9rem; font-weight: 600; background: #eff6ff; color: #1e40af; border-radius: 4px; padding: 2px;" 
+                            style="width: 32px; height: 26px; text-align: center; border: 1px solid #93c5fd; font-size: 0.75rem; font-weight: 600; background: #eff6ff; color: #1e40af; border-radius: 4px; padding: 0;" 
                             title="Previsto (%)" oninput="formatPercentInput(this)" onblur="blurPercentInput(this)" onfocus="focusPercentInput(this)">
                         <input type="text" id="secDay${i}_R" placeholder="R" class="day-input" 
-                            style="width: 45px; text-align: center; border: 1px solid #86efac; font-size: 0.9rem; font-weight: 600; background: #f0fdf4; color: #166534; border-radius: 4px; padding: 2px;" 
+                            style="width: 32px; height: 26px; text-align: center; border: 1px solid #86efac; font-size: 0.75rem; font-weight: 600; background: #f0fdf4; color: #166534; border-radius: 4px; padding: 0;" 
                             title="Realizado (%)" oninput="formatPercentInput(this)" onblur="blurPercentInput(this)" onfocus="focusPercentInput(this)">
+                    </div>
+
+                    <!-- Staff Row -->
+                    <div style="display: flex; gap: 2px; width: 100%; justify-content: center;">
+                         <input type="text" id="secDay${i}_C" placeholder="C" class="day-input" 
+                            style="width: 32px; height: 26px; text-align: center; border: 1px solid #fed7aa; font-size: 0.75rem; font-weight: 600; background: #fff7ed; color: #c2410c; border-radius: 4px; padding: 0;" 
+                            title="Contratado">
+                         <input type="text" id="secDay${i}_S" placeholder="S" class="day-input" 
+                            style="width: 32px; height: 26px; text-align: center; border: 1px solid #fecaca; font-size: 0.75rem; font-weight: 600; background: #fef2f2; color: #b91c1c; border-radius: 4px; padding: 0;" 
+                            title="Substituído">
                     </div>
                 </div>
             `;
@@ -1961,12 +1973,16 @@ function openSecurityFormModal(id = null) {
             document.getElementById('secResponsavel').value = record.responsavel || '';
             document.getElementById('secObservacao').value = record.observacao || '';
 
-            // Populate days (P and R)
+            // Populate days (P, R, C, S)
             activeSecurityDays.forEach(i => {
                 const elP = document.getElementById(`secDay${i}_P`);
                 const elR = document.getElementById(`secDay${i}_R`);
+                const elC = document.getElementById(`secDay${i}_C`);
+                const elS = document.getElementById(`secDay${i}_S`);
                 if (elP) elP.value = record[`day${i}_P`] || '';
                 if (elR) elR.value = record[`day${i}_R`] || '';
+                if (elC) elC.value = record[`day${i}_C`] || '';
+                if (elS) elS.value = record[`day${i}_S`] || '';
             });
         }
     } else {
@@ -1991,17 +2007,22 @@ function saveSecurityRecord() {
         th: document.getElementById('secTH').value,
         turno: document.getElementById('secTurno').value,
         contratado: document.getElementById('secContratado').value,
+        // Removed global C/S
         solicitante: document.getElementById('secSolicitante').value,
         responsavel: document.getElementById('secResponsavel').value,
         observacao: document.getElementById('secObservacao').value,
     };
 
-    // Collect days 1-31 (Previsto and Real)
+    // Collect days 1-31 (Previsto, Real, C, S)
     for (let i = 1; i <= 31; i++) {
         const valP = document.getElementById(`secDay${i}_P`)?.value;
         const valR = document.getElementById(`secDay${i}_R`)?.value;
+        const valC = document.getElementById(`secDay${i}_C`)?.value;
+        const valS = document.getElementById(`secDay${i}_S`)?.value;
         if (valP) record[`day${i}_P`] = valP;
         if (valR) record[`day${i}_R`] = valR;
+        if (valC) record[`day${i}_C`] = valC;
+        if (valS) record[`day${i}_S`] = valS;
     }
 
     if (editId) {
@@ -2568,7 +2589,16 @@ function renderMKSList() {
 
         const isChild = idx > 0;
         const real = parseInt(record.percentReal) || 0;
-        const prev = parseInt(record.percentPrevisto) || 0;
+
+        // DYNAMIC EXPECTED PROGRESS
+        // Parse dates and calculate relative to NOW
+        let prev = 0;
+        if (record.inicio && record.termino) {
+            prev = calculateMKSExpectedProgress(record.inicio, record.termino);
+        } else {
+            prev = parseInt(record.percentPrevisto) || 0;
+        }
+
         const isComp = real === 100;
 
         // Match Main Dashboard UI
@@ -2657,6 +2687,47 @@ function renderMKSList() {
 
     updateMKSNavigator(currentMKSRecordIndex + 1, 0, totalIDs); // Fix args: start, end(unused), total
     updateMKSStats(); // Ensure stats update dynamically
+}
+
+
+// Date Helper for MKS (Supports "DD/MM/YYYY - HH:mm" and "DD/MM/YYYY")
+function calculateMKSExpectedProgress(startStr, endStr) {
+    if (!startStr || !endStr) return 0;
+
+    // Parse function
+    const parseMKSDate = (str) => {
+        try {
+            // Handle "10/01/2026 - 23:00" or just "10/01/2026"
+            const parts = str.split(' - ');
+            const dateParts = parts[0].split('/');
+            let timeParts = [0, 0];
+            if (parts.length > 1) {
+                timeParts = parts[1].split(':').map(Number);
+            }
+
+            if (dateParts.length < 3) return null;
+
+            let y = parseInt(dateParts[2]);
+            if (y < 100) y += 2000; // Handle 2-digit years
+
+            return new Date(y, parseInt(dateParts[1]) - 1, parseInt(dateParts[0]), timeParts[0] || 0, timeParts[1] || 0);
+        } catch (e) { return null; }
+    };
+
+    const start = parseMKSDate(startStr);
+    const end = parseMKSDate(endStr);
+    const now = new Date(); // Use system time (2026-01-12)
+
+    if (!start || !end) return 0;
+    if (end <= start) return 100; // Invalid range safeguard
+
+    if (now < start) return 0;
+    if (now > end) return 100;
+
+    const totalDuration = end - start;
+    const elapsed = now - start;
+
+    return Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 100)));
 }
 
 
@@ -3386,10 +3457,10 @@ window.setupSecurityListener = setupSecurityListener;
 window.loadMKSData = loadMKSData;
 window.setupMKSListener = setupMKSListener;
 
+
 function renderSecurityTableHeaders() {
     const headerRow = document.getElementById('securityHeaderRow');
     const subHeaderRow = document.getElementById('securitySubHeaderRow');
-    // ... existing code ...
 
     if (!headerRow || !subHeaderRow) return;
 
@@ -3407,7 +3478,7 @@ function renderSecurityTableHeaders() {
 
     // Dynamic Days Headers
     activeSecurityDays.forEach(day => {
-        headerHTML += `<th colspan="2" class="day-col">${day}</th>`;
+        headerHTML += `<th colspan="4" class="day-col">${day}</th>`;
     });
 
     // Actions Header
@@ -3418,44 +3489,62 @@ function renderSecurityTableHeaders() {
     // Sub-headers Row
     let subHeaderHTML = '';
     activeSecurityDays.forEach(() => {
-        subHeaderHTML += `<th class="sub-col col-p">P</th><th class="sub-col col-r">R</th>`;
+        subHeaderHTML += `
+            <th class="sub-col col-p" title="Previsto">P</th>
+            <th class="sub-col col-r" title="Realizado">R</th>
+            <th class="sub-col col-c" title="Contratado">C</th>
+            <th class="sub-col col-s" title="Substituído">S</th>
+        `;
     });
 
     subHeaderRow.innerHTML = subHeaderHTML;
 }
 
-// Initial load
-document.addEventListener('DOMContentLoaded', () => {
-    loadSecurityConfig();
-});
+function renderSecurityList() {
+    const tbody = document.getElementById('securityTableBody');
+    if (!tbody) return;
 
-// Helper functions for percentage inputs
-function formatPercentInput(input) {
-    // Remove non-digits
-    let val = input.value.replace(/\D/g, '');
+    tbody.innerHTML = securityRecords.map(r => {
+        // Generate day cells (P, R, C, S)
+        let dayCells = '';
+        activeSecurityDays.forEach(i => {
+            let valP = r[`day${i}_P`] || '';
+            let valR = r[`day${i}_R`] || '';
+            let valC = r[`day${i}_C`] || '';
+            let valS = r[`day${i}_S`] || '';
 
-    // Limit to 100
-    if (val !== '') {
-        let num = parseInt(val, 10);
-        if (num > 100) num = 100;
-        val = num.toString();
-    }
+            // Ensure value has % if it's a number for P and R
+            if (valP && !String(valP).includes('%')) valP += '%';
+            if (valR && !String(valR).includes('%')) valR += '%';
 
-    input.value = val;
+            dayCells += `
+                <td class="day-cell sub-cell-p" style="min-width: 35px; text-align: center; border-left: 1px solid #ddd; background: #f0f9ff; color: #0c4a6e !important; font-weight: bold;">${valP}</td>
+                <td class="day-cell sub-cell-r" style="min-width: 35px; text-align: center; border-left: 1px solid #eee; background: #f0fdf4; color: #14532d !important; font-weight: bold;">${valR}</td>
+                <td class="day-cell sub-cell-c" style="min-width: 35px; text-align: center; border-left: 1px solid #eee; background: #fff7ed; color: #c2410c !important;">${valC}</td>
+                <td class="day-cell sub-cell-s" style="min-width: 35px; text-align: center; border-left: 1px solid #eee; background: #fef2f2; color: #b91c1c !important;">${valS}</td>
+            `;
+        });
+
+        return `
+        <tr>
+            <td data-label="ID"><strong>${r.id}</strong></td>
+            <td data-label="Atividade">${r.atividade || '-'}</td>
+            <td data-label="TH"><span class="badge" style="background: ${r.th === 'SIM' ? 'var(--danger)' : 'var(--success)'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${r.th}</span></td>
+            <td data-label="Turno">${r.turno || '-'}</td>
+            <td data-label="Contratado/Substituído">${r.contratado || '-'}</td>
+            <td data-label="Solicitante">${r.solicitante || '-'}</td>
+            <td data-label="Responsável">${r.responsavel || '-'}</td>
+            <td data-label="Observação"><div style="max-height: 50px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;">${r.observacao || '-'}</div></td>
+            ${dayCells}
+            <td data-label="Ações" style="text-align: center;">
+                <div style="display: flex; gap: 0.3rem; justify-content: center;">
+                    <button class="btn-control edit" onclick="openSecurityFormModal(${r.id})" style="background: var(--warning); padding: 5px; height: 30px; width: 30px;">✏️</button>
+                    <button class="btn-control delete" onclick="deleteSecurityRecord(${r.id})" style="background: var(--danger); padding: 5px; height: 30px; width: 30px;">🗑️</button>
+                </div>
+            </td>
+        </tr>
+    `}).join('');
 }
-
-function blurPercentInput(input) {
-    let val = input.value.replace(/\D/g, '');
-    if (val !== '') {
-        input.value = val + '%';
-    }
-}
-
-function focusPercentInput(input) {
-    let val = input.value.replace(/\D/g, '');
-    input.value = val;
-}
-
 // --- WELDING PERSISTENCE LOGIC (Restored) ---
 
 function getWeldsCompleted(key) {
