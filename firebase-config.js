@@ -14,13 +14,14 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // Global variables
-let currentUser = null;
+var currentUser = null;
 let unsubscribeProgress = null;
 
 // ====== AUTHENTICATION STATE ======
 
 auth.onAuthStateChanged(async (user) => {
     currentUser = user;
+
 
     if (user) {
         // User is signed in
@@ -424,4 +425,3 @@ function showMainMenu() {
 
 // Expose to window so script.js can overwrite or use it? 
 // script.js will overwrite it, which is fine as long as logic is same.
-window.showMainMenu = showMainMenu;
