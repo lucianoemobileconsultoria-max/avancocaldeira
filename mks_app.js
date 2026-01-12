@@ -580,15 +580,17 @@ function parseActivitiesFromWorkbook(workbook) {
             const colTotalWelds = getVal(colMap.totalWelds);
             if (colTotalWelds && !isNaN(colTotalWelds)) {
                 const parsed = parseInt(colTotalWelds);
-                if (parsed > 0) {
-                    finalHasWelds = true;
+                // Accept 0 as a valid value (meaning NO welds) to prevent fallback
+                if (parsed >= 0) {
+                    finalHasWelds = parsed > 0;
                     finalTotalWelds = parsed;
                 }
             }
+            // CRITICAL FIX: If column exists, rely ONLY on it. Do not fallback to name scanning.
+            // This prevents counting "Ultrasound (100 welds)" as 100 welds when the column says 0 or empty.
         }
-
-        // Fallback: If column didn't provide valid data, check name extraction
-        if (!finalHasWelds && weldsInfo.hasWelds) {
+        // Fallback: ONLY check name extraction if the column is strictly MISSING from the file
+        else if (weldsInfo.hasWelds) {
             finalHasWelds = true;
             finalTotalWelds = weldsInfo.totalWelds;
         }
@@ -955,13 +957,17 @@ function createActivityHierarchy(list) {
 // Stats
 
 // Helper function to get the REAL progress of an activity (soldas ou manual)
+// Helper function to get the REAL progress of an activity (soldas ou manual)
 function getRealProgress(activity) {
+    let val = 0;
     if (activity.hasWelds && activity.totalWelds > 0) {
         // Progresso baseado em soldas
-        return Math.round((getWeldsCompleted(activity.uniqueKey) / activity.totalWelds) * 100);
+        val = Math.round((getWeldsCompleted(activity.uniqueKey) / activity.totalWelds) * 100);
+    } else {
+        // Progresso manual
+        val = getProgress(activity.uniqueKey);
     }
-    // Progresso manual
-    return getProgress(activity.uniqueKey);
+    return isNaN(val) ? 0 : val;
 }
 
 function calculateSectionProgress(list) {
@@ -1002,28 +1008,18 @@ function calculateStats() {
         if (a.hasWelds) {
             const cleanId = String(a.id).trim();
 
-            // Check if this activity is a Parent (check against FULL LIST of activities)
-            const isParent = activities.some(other => {
-                const otherId = String(other.id).trim();
-                return otherId !== cleanId && otherId.startsWith(cleanId + '.');
-            });
-
-            // Only count if it's a LEAF (not a parent)
-            if (!isParent) {
-                const tw = Number(a.totalWelds) || 0;
-                let cw = 0;
-                if (savedWeldsData[a.uniqueKey]) {
-                    cw = Number(savedWeldsData[a.uniqueKey].completed) || 0;
-                }
-
-                // DEBUG: Log activity being summed
-                // console.log(`[+] SOMANDO (Folha): ID=${cleanId} Welds=${tw}`);
-
-                totalWelds += tw;
-                completedWelds += cw;
-            } else {
-                // console.log(`[-] IGNORADO (Pai): ID=${cleanId}`);
+            // SIMPLIFIED LOGIC: Sum EVERYTHING that has welds and fits the filter
+            // We removed the isParent check because it was filtering out valid rows
+            const tw = Number(a.totalWelds) || 0;
+            let cw = 0;
+            if (savedWeldsData[a.uniqueKey]) {
+                cw = Number(savedWeldsData[a.uniqueKey].completed) || 0;
             }
+
+            console.log(`[+] SOMANDO: ID=${String(a.id).trim()} Welds=${tw}`);
+
+            totalWelds += tw;
+            completedWelds += cw;
         }
     });
     console.log(`--- TOTAL: ${totalWelds} ---`);
@@ -1046,7 +1042,14 @@ function updateStats() {
     if (typeof currentViewMode !== 'undefined' && currentViewMode === 'rotina') {
         list = activities.filter(a => a.rotina && (String(a.rotina).toUpperCase().includes('SIM') || String(a.rotina).toUpperCase() === 'S'));
     } else {
-        list = activities.filter(a => !(a.rotina && (String(a.rotina).toUpperCase().includes('SIM') || String(a.rotina).toUpperCase() === 'S')));
+        // STRICT FILTER: Only items marked as "NÃO" (or "NAO" to be safe)
+        // Note: Missing values default to "NÃO" during import, so we check valid possibilities.
+        list = activities.filter(a => {
+            const r = String(a.rotina || '').toUpperCase().trim();
+            // Accept "NÃO", "NAO" or empty (which defaults to NON-ROUTINE in this context)
+            // But user said "use what IS = NÃO", so we prioritize the explicit value.
+            return r === 'NÃO' || r === 'NAO' || r === 'N' || r === '';
+        });
     }
 
     // Calculate using the new helper that handles hierarchy correctly
@@ -3677,6 +3680,7 @@ function calculateWeldsRobustV2(list) {
 }
 
 // Helper for robust weld calculation V3 (Smart Parent Logic)
+// Helper for robust weld calculation V3 (Strict Summation - No Deduplication)
 function calculateWeldsRobustV3(list) {
     let totalWelds = 0;
     let completedWelds = 0;
@@ -3688,57 +3692,20 @@ function calculateWeldsRobustV3(list) {
         if (saved) savedWeldsData = JSON.parse(saved);
     } catch (e) { }
 
-    // 1. DEDUPLICATE BY ID FIRST (Best Instance)
-    const uniqueActivitiesMap = new Map();
+    console.log('--- CALCULO DE SOLDAS V3 (SOMA ESTRITA) ---');
+
+    // SIMPLE SUMMATION - Sum "TOTAL SOLDAS" for all rows in the filtered list
     list.forEach(a => {
-        const cleanId = String(a.id).trim();
-        const currentHasWelds = a.hasWelds && Number(a.totalWelds) > 0;
-        if (!uniqueActivitiesMap.has(cleanId)) {
-            uniqueActivitiesMap.set(cleanId, a);
-        } else {
-            const stored = uniqueActivitiesMap.get(cleanId);
-            const storedHasWelds = stored.hasWelds && Number(stored.totalWelds) > 0;
-            if (!storedHasWelds && currentHasWelds) uniqueActivitiesMap.set(cleanId, a);
-        }
-    });
-
-    const uniqueList = Array.from(uniqueActivitiesMap.values());
-    console.log(`--- CALCULO DE SOLDAS V3 (List: ${uniqueList.length}) ---`);
-
-    // 2. Filter Hierarchical Parents with SMART LOGIC
-    uniqueList.forEach(a => {
         if (a.hasWelds) {
-            const cleanId = String(a.id).trim();
-
-            // Find children in current list
-            const children = uniqueList.filter(other => {
-                const otherId = String(other.id).trim();
-                if (otherId === cleanId) return false;
-                return otherId.startsWith(cleanId + '.') ||
-                    otherId.startsWith(cleanId + ' ') ||
-                    otherId.startsWith(cleanId + '-');
-            });
-
-            const isParent = children.length > 0;
-            let shouldCount = true;
-
-            if (isParent) {
-                // Only ignore parent if children HAVE welds (> 0)
-                const childrenWeldsSum = children.reduce((sum, c) => sum + (Number(c.totalWelds) || 0), 0);
-                if (childrenWeldsSum > 0) {
-                    shouldCount = false; // Children handle the count
-                }
+            const tw = Number(a.totalWelds) || 0;
+            let cw = 0;
+            if (savedWeldsData[a.uniqueKey]) {
+                cw = Number(savedWeldsData[a.uniqueKey].completed) || 0;
             }
 
-            if (shouldCount) {
-                const tw = Number(a.totalWelds) || 0;
-                let cw = 0;
-                if (savedWeldsData[a.uniqueKey]) {
-                    cw = Number(savedWeldsData[a.uniqueKey].completed) || 0;
-                }
-                totalWelds += tw;
-                completedWelds += cw;
-            }
+            // Simple Sum
+            totalWelds += tw;
+            completedWelds += cw;
         }
     });
 
