@@ -661,8 +661,24 @@ function extractWeldsInfo(name) {
 function loadWeldsData() {
     try {
         const saved = localStorage.getItem('caldeira_welds');
-        if (saved) weldsData = JSON.parse(saved);
-    } catch (e) { console.error(e); }
+        if (saved) {
+            weldsData = JSON.parse(saved);
+
+            // MIGRATION: Convert old format to new format
+            for (const key in weldsData) {
+                const entry = weldsData[key];
+                // If entry is a number (old format), convert to object
+                if (typeof entry === 'number') {
+                    weldsData[key] = { completed: entry, total: 0 };
+                }
+            }
+        } else {
+            weldsData = {}; // Ensure it's an empty object
+        }
+    } catch (e) {
+        console.error('Erro ao carregar weldsData:', e);
+        weldsData = {}; // Reset to empty on error
+    }
 }
 
 // Save welds data
@@ -685,9 +701,23 @@ async function saveWeldsData() {
 
 // Welds logic
 function getWeldsCompleted(key) {
+    if (!weldsData || typeof weldsData !== 'object') return 0;
     if (!weldsData[key]) return 0;
-    const val = weldsData[key].completed;
-    return (typeof val === 'number' && !isNaN(val)) ? val : 0;
+
+    // Handle different data structures
+    const entry = weldsData[key];
+
+    // If entry is a number directly (old format)
+    if (typeof entry === 'number' && !isNaN(entry)) return entry;
+
+    // If entry is an object with completed property (new format)
+    if (typeof entry === 'object' && entry !== null) {
+        const val = entry.completed;
+        if (typeof val === 'number' && !isNaN(val)) return val;
+    }
+
+    // Default fallback
+    return 0;
 }
 function setWeldsCompleted(key, val, total) {
     if (!weldsData[key]) weldsData[key] = {};
