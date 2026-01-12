@@ -747,63 +747,41 @@ function decrementWelds(key) {
     }
 }
 function updateWeldsDisplay(key) {
-    console.log('[UPDATE] updateWeldsDisplay called for key:', key);
-    const currentCompleted = getWeldsCompleted(key);
-    console.log('[UPDATE] Current completed:', currentCompleted);
+    const completed = Number(getWeldsCompleted(key)) || 0;
+    const a = activities.find(x => x.uniqueKey === key);
+    if (!a) return;
 
-    const items = document.querySelectorAll(`.activity-item[data-key="${key}"]`);
-    console.log('[UPDATE] Found items:', items.length);
-    items.forEach(item => {
-        // 1. Get current value (completed)
-        const val = Number(currentCompleted) || 0;
+    const total = Number(a.totalWelds) || 0;
+    const remaining = Math.max(0, total - completed);
 
-        // 2. Get Total from data attribute (Stable & Reliable)
-        let total = Number(item.dataset.total) || 0;
-
-        // Fallback: If data attribute missing/zero, try backend
-        if (total === 0) {
-            const a = activities.find(x => x.uniqueKey === key);
-            total = a ? Number(a.totalWelds) : 0;
-        }
-
-        // 3. Calculate Restam
-        const remaining = Math.max(0, total - val);
-
-        // 4. Update UI - RESTAM (Update ALL matching elements)
-        const restamEls = item.querySelectorAll('.welds-remaining-value, .welds-value');
-        console.log('[UPDATE] Found RESTAM elements:', restamEls.length, 'Setting to:', remaining);
-        restamEls.forEach(el => {
-            console.log('[UPDATE] Updating RESTAM element:', el.className, 'From:', el.textContent, 'To:', remaining);
-            el.textContent = remaining;
+    // Update ALL matching DOM elements
+    document.querySelectorAll(`.activity-item[data-key="${key}"]`).forEach(item => {
+        // Update RESTAM fields
+        item.querySelectorAll('.welds-remaining-value, .welds-value').forEach(el => {
+            el.textContent = String(remaining);
         });
 
-        // 5. Update UI - FEITO (Update ALL matching elements)
-        const feitoEls = item.querySelectorAll('.welds-done-value');
-        console.log('[UPDATE] Found FEITO elements:', feitoEls.length, 'Setting to:', val);
-        feitoEls.forEach(el => {
-            console.log('[UPDATE] Updating FEITO element:', el.className, 'From:', el.textContent, 'To:', val);
-            el.textContent = val;
+        // Update FEITO fields
+        item.querySelectorAll('.welds-done-value').forEach(el => {
+            el.textContent = String(completed);
         });
 
-        // 6. Update Progress Bar
-        const progress = total > 0 ? Math.round((val / total) * 100) : 0;
-        const realPercEl = item.querySelector('.progress-bar-row:first-child .progress-percentage');
-        const realBar = item.querySelector('.progress-bar-row:first-child .progress-bar');
+        // Update progress bar
+        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const bar = item.querySelector('.progress-bar-row:first-child .progress-bar');
+        const perc = item.querySelector('.progress-bar-row:first-child .progress-percentage');
 
-        if (realPercEl) realPercEl.textContent = `${progress}%`;
-        if (realBar) {
-            realBar.style.width = `${progress}%`;
-            realBar.style.background = getProgressGradient(progress);
+        if (bar) {
+            bar.style.width = `${progress}%`;
+            bar.style.background = getProgressGradient(progress);
         }
+        if (perc) perc.textContent = `${progress}%`;
 
-        // Update class
         if (progress === 100) item.classList.add('completed');
         else item.classList.remove('completed');
     });
 
-    // Update Section Stats
-    const a = activities.find(x => x.uniqueKey === key);
-    if (a) updateSectionStats(a.id);
+    updateSectionStats(a.id);
     updateStats();
 }
 
