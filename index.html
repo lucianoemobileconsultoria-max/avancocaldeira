@@ -119,7 +119,7 @@
                             <div class="stat-value" id="criticalActivities" style="color: #ff0000;">0</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">Soldas OK</div>
+                            <div class="stat-label" id="weldStatsLabel">Soldas FORNALHA</div>
                             <div class="stat-value completed" id="totalWeldsStat">0 / 0 (0%)</div>
                         </div>
                     </div>
@@ -130,6 +130,9 @@
             <div class="tab-navigation">
                 <button class="tab-button active" id="activitiesTab" onclick="showActivitiesTab()">
                     📋 Atividades
+                </button>
+                <button class="tab-button" id="rotinaTab" onclick="showRotinaTab()">
+                    🔄 Rotina
                 </button>
                 <button class="tab-button" id="sCurveTab" onclick="showSCurveTab()">
                     📈 Curva S
@@ -165,6 +168,10 @@
                             <option value="notStarted">Não Iniciadas (0%)</option>
                         </select>
                     </div>
+                    <div class="filter-group">
+                        <label for="filterDate" class="filter-label">📅 DATA DE INÍCIO:</label>
+                        <input type="date" id="filterDate" class="filter-input" style="padding: 0.5rem;">
+                    </div>
                 </div>
 
                 <!-- Record Navigator -->
@@ -197,7 +204,7 @@
                         ➕ Novo Registro (Manual)
                     </button>
 
-                    <button onclick="clearAllData()" class="btn-upload admin-only" style="background: #dc2626;">
+                    <button onclick="openClearDataModal()" class="btn-upload admin-only" style="background: #dc2626;">
                         🗑️ Limpar Dados
                     </button>
 
@@ -269,6 +276,13 @@
                                         <option value="SIM">SIM (Cabeçalho/Grupo)</option>
                                     </select>
                                 </div>
+                                <div class="filter-group">
+                                    <label class="filter-label">Rotina?</label>
+                                    <select id="manualRotina" class="filter-select">
+                                        <option value="NÃO">NÃO</option>
+                                        <option value="SIM">SIM</option>
+                                    </select>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -289,6 +303,14 @@
                     <div class="scurve-header">
                         <h2>📈 Curva S - Progresso Acumulado</h2>
                         <p>Comparação entre progresso planejado e real ao longo do tempo</p>
+
+                        <div class="view-toggle-container"
+                            style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+                            <button id="sCurveActBtn" class="tab-button active" onclick="setSCurveMode('activities')"
+                                style="padding: 0.5rem 1rem; font-size: 0.9rem;">Atividades</button>
+                            <button id="sCurveRotBtn" class="tab-button" onclick="setSCurveMode('rotina')"
+                                style="padding: 0.5rem 1rem; font-size: 0.9rem;">Rotina</button>
+                        </div>
                     </div>
                     <div class="chart-wrapper">
                         <canvas id="sCurveChart"></canvas>
@@ -312,6 +334,15 @@
                     <div class="scurve-header">
                         <h2>📊 Mapa de Soldas (Cluster View)</h2>
                         <p>Visualização de todos os clusters de solda. Verde = Concluído.</p>
+
+                        <div class="view-toggle-container"
+                            style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+                            <button id="weldClusterActBtn" class="tab-button active"
+                                onclick="setWeldClusterMode('activities')"
+                                style="padding: 0.5rem 1rem; font-size: 0.9rem;">Atividades</button>
+                            <button id="weldClusterRotBtn" class="tab-button" onclick="setWeldClusterMode('rotina')"
+                                style="padding: 0.5rem 1rem; font-size: 0.9rem;">Rotina</button>
+                        </div>
                     </div>
 
                     <div class="weld-stats-summary"
@@ -389,34 +420,72 @@
         </div>
 
 
+        <!-- Floating Record Navigator -->
+        <div id="floatingNavigator" class="floating-navigator" style="display: none;">
+            <button id="floatPrev" class="btn-float" onclick="previousRecord()">◀</button>
+            <div class="float-info" id="floatRecordInfo">1 / 5</div>
+            <button id="floatNext" class="btn-float" onclick="nextRecord()">▶</button>
+        </div>
+
     </div> <!-- End Main Dashboard -->
 
 
 
-    <!-- MKS Control Modal (List View) - MOVED TO BODY END -->
-    <div id="mksModal" class="modal">
-        <div class="modal-content" style="max-width: 98vw; width: 98vw; padding: 1.5rem;">
-            <div class="modal-header"
-                style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button onclick="returnToMainMenu()"
-                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                        ↩️ Menu
-                    </button>
-                    <h2>🏭 MKS Control</h2>
+    <!-- MKS Dashboard (Full Screen) -->
+    <div id="mksDashboard" style="display: none;">
+        <div class="container">
+            <!-- Header -->
+            <header class="header" style="position: relative;">
+                <button onclick="returnToMainMenu()"
+                    style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); font-size: 0.9rem; padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem; z-index: 10;">
+                    ↩️ Menu
+                </button>
+                <div class="header-content">
+                    <div class="logo-section">
+                        <div class="logo-icon">🔎</div>
+                        <div>
+                            <h1 class="title">MKS Control</h1>
+                            <p class="subtitle">Monitoramento de Segurança e Atividades <span
+                                    style="opacity: 0.6; font-size: 0.8rem;">v4.0.2</span></p>
+                        </div>
+                    </div>
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Registros</div>
+                            <div class="stat-value" id="mksTotalRecords">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Avanço Geral</div>
+                            <div class="stat-value completed" id="mksOverallProgress">0%</div>
+                        </div>
+
+                    </div>
                 </div>
+            </header>
+
+            <!-- Tab Navigation (Simplified for MKS) -->
+            <div class="tab-navigation">
+                <button class="tab-button active">
+                    📋 Lista de Registros MKS
+                </button>
             </div>
-            <div class="modal-body">
-                <div class="security-controls-container">
+
+            <!-- MKS Content Area -->
+            <div class="tab-content" id="mksContentArea" style="display: block;">
+
+                <!-- Action Bar (Replaces Filters) -->
+                <div class="filters"
+                    style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
                     <button class="btn-control mobile-menu-toggle" onclick="toggleMKSMobileMenu()"
                         style="display: none; width: 100%; margin-bottom: 1rem; background: var(--secondary); color: white; justify-content: center;">
                         ☰ Menu de Ações
                     </button>
 
                     <div class="section-actions security-actions" id="mksActionsMenu"
-                        style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        style="width: 100%; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+
                         <button class="btn-control btn-security-action" onclick="openMKSFormModal()"
-                            style="background: #10b981; color: white;">🛡️ Novo Registro</button>
+                            style="background: #10b981; color: white;">➕ Novo Registro</button>
 
                         <label for="mksExcelInput" class="btn-control btn-security-action"
                             style="background: #6366f1; color: white; cursor: pointer; margin-bottom: 0;">
@@ -431,23 +500,48 @@
                         <button class="btn-control btn-security-action" onclick="downloadMKSTemplate()"
                             style="background: #8b5cf6; color: white;">📑 Modelo XLS</button>
 
+
+
                         <button class="btn-control btn-security-action" onclick="clearMKSData()"
-                            style="background: #ef4444; color: white;">🗑️ Limpar Tudo</button>
+                            style="background: #ef4444; color: white; margin-left: auto;">🗑️ Limpar Tudo</button>
+                    </div>
+                </div>
 
-                        <button class="btn-control btn-security-action" onclick="openMKSDaysConfig()"
-                            style="background: #f59e0b; color: white;">⚙️ Configurar Dias</button>
+                <!-- MKS Navigator (Pagination) -->
+                <div class="navigator-container" id="mksNavigator"
+                    style="background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border-radius: 16px; padding: 0.8rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 1rem; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+
+                    <button id="mksPrevRecord" onclick="prevMKSRecord()"
+                        style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;">
+                        ◀ Anterior
+                    </button>
+
+                    <div id="mksRecordInfo"
+                        style="font-size: 1.1rem; font-weight: 700; color: white; min-width: 150px; text-align: center; background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius: 8px;">
+                        0 de 0
                     </div>
 
-                    <div
-                        style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                        <table class="security-table" id="mksTable">
-                            <thead>
-                                <tr id="mksHeaderRow"></tr>
-                                <tr id="mksSubHeaderRow" class="subheader-row"></tr>
-                            </thead>
-                            <tbody id="mksTableBody"></tbody>
-                        </table>
-                    </div>
+                    <button id="mksNextRecord" onclick="nextMKSRecord()"
+                        style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;">
+                        Próximo ▶
+                    </button>
+                </div>
+
+                <!-- MKS Card Container -->
+                <div id="mksContainer" class="activities-container">
+                    <!-- Cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- Footer User Section -->
+            <div class="user-section footer-user">
+                <div id="mksUserDisplay" class="user-email"></div>
+                <div class="user-actions">
+                    <span style="font-size: 0.7rem; opacity: 0.5; margin-right: 1rem;">Version 4.0.0</span>
+                    <button class="btn-logout" onclick="returnToMainMenu()"
+                        style="background: #475569; margin-right: 0.5rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        🏠 Menu Principal
+                    </button>
                 </div>
             </div>
         </div>
@@ -576,6 +670,32 @@
                         onclick="saveSecurityRecord()">💾 Salvar</button>
                     <button class="btn-control" style="background: var(--danger); color: white; flex: 1;"
                         onclick="closeSecurityFormModal()">❌ Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Data Modal -->
+    <div id="clearDataModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: center;">
+                <h2 style="color: var(--danger);">🗑️ Limpar Todos os Dados</h2>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Esta ação é irreversível. Todos os dados
+                    serão apagados.</p>
+
+                <div class="input-group">
+                    <label style="text-align: left;">Senha de Administrador</label>
+                    <input type="password" id="clearDataPassword" class="filter-input" placeholder="Digite a senha..."
+                        style="background: rgba(0,0,0,0.2);">
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn-control" onclick="closeClearDataModal()"
+                        style="background: var(--text-secondary); color: white; flex: 1;">Cancelar</button>
+                    <button class="btn-control" onclick="confirmClearData()"
+                        style="background: var(--danger); color: white; flex: 1;">☠️ APAGAR TUDO</button>
                 </div>
             </div>
         </div>
@@ -729,8 +849,54 @@
         </div>
     </div>
     <script src="firebase-config.js?v=23"></script>
-    <script src="script.js?v=39"></script>
+    <script src="mks_app.js"></script>
     <script src="migration.js?v=21"></script>
+    <script>
+        // ULTIMATE OVERRIDE FOR MKS STATS
+        window.updateMKSStats = function () {
+            let finalVal = 0;
+            try {
+                if (typeof mksRecords === 'undefined' || !mksRecords) return 0;
+
+                // 1. UPDATE TOTAL RECORDS (Rows)
+                const totalEl = document.getElementById('mksTotalRecords');
+                if (totalEl) totalEl.textContent = mksRecords.length;
+
+                // 2. Group Logic
+                const g = {};
+                mksRecords.forEach(r => { if (!g[r.id]) g[r.id] = []; g[r.id].push(r); });
+
+                const masterIds = Object.keys(g);
+                let sum = 0;
+                let count = 0;
+
+                masterIds.forEach(id => {
+                    const m = g[id][0];
+                    if (m) {
+                        let val = parseInt(m.percentReal);
+                        if (isNaN(val)) val = 0;
+                        sum += val;
+                        count++;
+                    }
+                });
+
+                // Calculate Average
+                if (count > 0) {
+                    finalVal = Math.round(sum / count);
+                }
+
+                const el = document.getElementById('mksOverallProgress');
+                if (el) {
+                    el.textContent = finalVal + '%';
+                    el.style.color = '#4ade80'; // Bright Green
+                    el.style.fontWeight = 'bold';
+                }
+            } catch (e) { console.error("Inline Error:", e); }
+            return finalVal;
+        };
+        // Run periodically to ensure it catches data load
+        setInterval(window.updateMKSStats, 1000);
+    </script>
 </body>
 
 </html>
