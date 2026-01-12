@@ -1157,7 +1157,7 @@ function renderActivity(a, isChild = false) {
                 <div class="welds-control">
                     <div class="welds-header"><span class="welds-icon">🔧</span><span class="welds-label">SOLDAS FORNALHA:</span></div>
                     <div class="welds-controls-wrapper">
-                        <button class="btn-control decrement" onclick="decrementWelds('${a.uniqueKey}')">▼</button>
+                        <button class="btn-control decrement">▼</button>
                         
                         <!-- Restam Box -->
                         <div class="welds-box remaining" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); padding: 5px 10px; border-radius: 8px; text-align: center;">
@@ -1183,7 +1183,7 @@ function renderActivity(a, isChild = false) {
                             </div>
                         </div>
 
-                        <button class="btn-control increment" onclick="incrementWelds('${a.uniqueKey}')">▲</button>
+                        <button class="btn-control increment">▲</button>
                     </div>
                 </div>` : ''}
             
